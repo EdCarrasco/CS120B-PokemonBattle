@@ -27,9 +27,7 @@ void LCD_ClearScreen(void) {
 	LCD_WriteCommand(0x01);
 }
 
-void LCD_init(void) {
-
-	//wait for 100 ms.
+void LCD_Init(void) {
 	delay_ms(100);
 	LCD_WriteCommand(0x38);
 	LCD_WriteCommand(0x06);
@@ -38,18 +36,18 @@ void LCD_init(void) {
 	delay_ms(10);
 }
 
-void LCD_WriteCommand (unsigned char Command) {
+void LCD_WriteCommand (unsigned char command) {
 	CLR_BIT(CONTROL_BUS,RS);
-	DATA_BUS = Command;
+	DATA_BUS = command;
 	SET_BIT(CONTROL_BUS,E);
 	asm("nop");
 	CLR_BIT(CONTROL_BUS,E);
 	delay_ms(2); // ClearScreen requires 1.52ms to execute
 }
 
-void LCD_WriteData(unsigned char Data) {
+void LCD_WriteData(unsigned char data) {
 	SET_BIT(CONTROL_BUS,RS);
-	DATA_BUS = Data;
+	DATA_BUS = data;
 	SET_BIT(CONTROL_BUS,E);
 	asm("nop");
 	CLR_BIT(CONTROL_BUS,E);
@@ -57,14 +55,6 @@ void LCD_WriteData(unsigned char Data) {
 }
 
 void LCD_DisplayString( unsigned char column, /*const unsigned*/ char* string) {
-	LCD_ClearScreen();
-	unsigned char c = column;
-	while(*string) {
-		LCD_Cursor(c++);
-		LCD_WriteData(*string++);
-	}
-}
-void LCD_DisplayStringNoErase( unsigned char column, const unsigned char* string) {
 	unsigned char c = column;
 	while(*string) {
 		LCD_Cursor(c++);
@@ -76,19 +66,35 @@ void LCD_Cursor(unsigned char column) {
 	if ( column < 17 ) { // 16x1 LCD: column < 9
 		// 16x2 LCD: column < 17
 		LCD_WriteCommand(0x80 + column - 1);
-		} else {
+	} else {
 		LCD_WriteCommand(0xB8 + column - 9);	// 16x1 LCD: column - 1
 		// 16x2 LCD: column - 9
 	}
 }
 
-void delay_ms(int miliSec) //for 8 Mhz crystal
+void LCD_WriteCustomData(unsigned char column, unsigned char *data_array) {
+	int i;
+	LCD_WriteCommand(0x40 + (column*8)); // Command 0x40 for GRAM
+	for (i = 0; i < 8; i++) {
+		LCD_WriteData(data_array[i]);
+	}
+	LCD_WriteCommand(0x80);
+}
 
+void LCD_WriteCustomString(unsigned char column, unsigned char **data_2Darray) {
+	unsigned char col = column;
+	while (**data_2Darray) {
+		LCD_Cursor(col++);
+		LCD_WriteCustomData(col, *data_2Darray++);
+	}
+}
+
+void delay_ms(int miliSec) //for 8 Mhz crystal
 {
-	int i,j;
-	for(i=0;i<miliSec;i++)
-	for(j=0;j<775;j++)
-	{
-		asm("nop");
+	int i, j;
+	for (i=0; i < miliSec; i++) {
+		for (j = 0; j < 775; j++) {
+    		asm("nop");
+		}
 	}
 }

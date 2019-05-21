@@ -40,4 +40,7 @@ void NokiaLCD_WriteString(const char *str);
 void NokiaLCD_SetCursor(uint8_t x, uint8_t y);
 void NokiaLCD_Render(void);
 
+void NokiaLCD_CustomBitmap(uint8_t xoffset, uint8_t yoffset, uint8_t direction);
+void NokiaLCD_HealthBar(uint8_t xoffset, uint8_t yoffset, uint8_t percentage);
+
 #endif /* NOKIA5110_H_ */

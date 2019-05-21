@@ -33,6 +33,30 @@ static struct {
 	.scale = 1
 };
 
+static uint8_t arr[20][20] = {
+    {0,0,0,0,0, 0,0,0,0,0, 0,0,1,1,1, 0,0,0,0,0},
+    {0,0,0,0,0, 0,0,0,0,0, 0,1,0,0,0, 1,0,0,0,0},
+    {0,0,0,0,0, 0,0,0,0,1, 1,1,0,0,0, 1,0,0,0,0},
+
+    {0,0,0,0,0, 0,0,1,1,0, 0,0,0,0,0, 0,1,1,0,0},
+    {0,0,0,1,1, 0,1,0,0,0, 0,0,0,0,0, 0,0,0,1,0},
+    {0,0,1,0,0, 1,1,0,0,0, 0,0,0,0,0, 0,0,0,0,1},
+    {0,0,1,0,0, 0,1,1,0,0, 0,0,0,0,0, 0,0,0,0,1},
+
+    {0,0,1,0,0, 0,0,0,1,0, 0,0,0,0,0, 0,0,0,0,1},
+    {0,1,0,0,0, 0,0,0,0,1, 1,1,0,0,0, 0,0,0,1,0},
+    {1,1,0,0,0, 0,0,0,0,0, 0,1,0,0,0, 1,1,1,1,0},
+    {1,1,0,0,0, 0,0,0,0,0, 1,0,1,1,1, 0,0,0,1,0},
+    
+    {1,0,0,0,0, 0,0,1,1,0, 0,0,0,0,0, 1,0,0,1,0},
+    {1,0,0,0,0, 0,1,0,0,0, 0,0,1,0,0, 1,1,1,0,0},
+    {0,1,0,0,0, 0,1,0,0,0, 0,1,0,0,1, 0,0,0,0,0},
+    {0,0,1,1,0, 0,0,0,0,0, 1,0,0,0,1, 0,0,0,0,0},
+
+    {0,0,0,0,1, 1,1,1,1,1, 1,0,0,0,1, 0,0,0,0,0},
+    {0,0,0,0,0, 0,0,0,0,0, 0,1,1,1,0, 0,0,0,0,0}
+};
+
 static void write(uint8_t bytes, uint8_t isData) {
 	register uint8_t i;
 	PORT_LCD &= ~(1 << LCD_SCE); // Enable controller
@@ -110,10 +134,10 @@ void NokiaLCD_Clear(void) {
 	// Set column and row to 0
 	writeCommand(0x80);
 	writeCommand(0x40);
-	// Set cursor to (0,0)
+	// Reset the cursor position
 	nokiaLCD.cursorX = 0;
 	nokiaLCD.cursorY = 0;
-	// Clear everything
+	// Clear all pixels
 	for (i = 0; i < 504; i++) {
 		nokiaLCD.screen[i] = 0x00;
 	}
@@ -139,8 +163,8 @@ void NokiaLCD_SetScale(uint8_t scale) {
 void NokiaLCD_WriteChar(char code) {
 	// Set the pixels that compose the character
 	register uint8_t x, y;
-	unsigned char width = 5 * nokiaLCD.scale;
-	unsigned char height = 7 * nokiaLCD.scale;
+	uint8_t width = 5 * nokiaLCD.scale;
+	uint8_t height = 7 * nokiaLCD.scale;
 	for (x = 0; x < width; x++) {
 		for (y = 0; y < height; y++) {
 			uint8_t bool = pgm_read_byte(&CHARSET[code-32][x/nokiaLCD.scale]) & (1 << y/nokiaLCD.scale);
@@ -158,6 +182,43 @@ void NokiaLCD_WriteChar(char code) {
 		nokiaLCD.cursorX = 0;
 		nokiaLCD.cursorY = 0;
 	}
+}
+
+void NokiaLCD_CustomBitmap(uint8_t x, uint8_t y, uint8_t direction) {
+	uint8_t col, row;
+	
+	if (direction) {
+		for (col = 0; col < 20; col++) {
+    		for (row = 0; row < 20; row++) {
+        		NokiaLCD_SetPixel(x+col, y+row, arr[row][col]);
+    		}
+		}
+	} else {
+		for (col = 0; col < 20; col++) {
+    		for (row = 0; row < 20; row++) {
+        		NokiaLCD_SetPixel(x+col, y+row, arr[row][20-col-1]);
+    		}
+		}
+	}
+}
+
+void NokiaLCD_HealthBar(uint8_t xoffset, uint8_t yoffset, uint8_t percentage) {
+	uint8_t width = 40;
+	uint8_t height = 5;
+	uint8_t fill = 10;
+	uint8_t row, col;
+	for (row = 0; row < height; row++) {
+		for (col = 0; col < width; col++) {
+    		if (row == 0 || row == height-1) {
+				NokiaLCD_SetPixel(xoffset+col, yoffset+row, 1);
+			} else {
+				if ((col >= 0 && col <= fill) || (col == width-1)) {
+					NokiaLCD_SetPixel(xoffset+col, yoffset+row, 1);
+				}
+			}
+		}
+	}
+	
 }
 
 void NokiaLCD_WriteString(const char* str) {

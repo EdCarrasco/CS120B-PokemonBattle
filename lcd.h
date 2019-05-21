@@ -9,11 +9,14 @@
 #ifndef LCD_H_
 #define LCD_H_
 
-void LCD_init();
+void LCD_Init();
 void LCD_ClearScreen(void);
-void LCD_WriteCommand (unsigned char Command);
+void LCD_WriteCommand (unsigned char command);
+void LCD_WriteData(unsigned char data);
 void LCD_Cursor (unsigned char column);
 void LCD_DisplayString(unsigned char column ,/*const unsigned*/ char *string);
 void delay_ms(int miliSec);
+void LCD_WriteCustomData(unsigned char column, unsigned char *bytes);
+void LCD_WriteCustomString(unsigned char column, unsigned char **string);
 
 #endif /* LCD_H_ */
