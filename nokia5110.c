@@ -17,6 +17,7 @@
 #include <util/delay.h>
 #include "nokia5110.h"
 #include "nokia5110_chars.h"
+#include "sprites.h"
 
 /************************************************************************/
 /* PRIVATE                                                                     */
@@ -31,30 +32,6 @@ static struct {
 	.cursorX = 0,
 	.cursorY = 0,
 	.scale = 1
-};
-
-static uint8_t arr[20][20] = {
-    {0,0,0,0,0, 0,0,0,0,0, 0,0,1,1,1, 0,0,0,0,0},
-    {0,0,0,0,0, 0,0,0,0,0, 0,1,0,0,0, 1,0,0,0,0},
-    {0,0,0,0,0, 0,0,0,0,1, 1,1,0,0,0, 1,0,0,0,0},
-
-    {0,0,0,0,0, 0,0,1,1,0, 0,0,0,0,0, 0,1,1,0,0},
-    {0,0,0,1,1, 0,1,0,0,0, 0,0,0,0,0, 0,0,0,1,0},
-    {0,0,1,0,0, 1,1,0,0,0, 0,0,0,0,0, 0,0,0,0,1},
-    {0,0,1,0,0, 0,1,1,0,0, 0,0,0,0,0, 0,0,0,0,1},
-
-    {0,0,1,0,0, 0,0,0,1,0, 0,0,0,0,0, 0,0,0,0,1},
-    {0,1,0,0,0, 0,0,0,0,1, 1,1,0,0,0, 0,0,0,1,0},
-    {1,1,0,0,0, 0,0,0,0,0, 0,1,0,0,0, 1,1,1,1,0},
-    {1,1,0,0,0, 0,0,0,0,0, 1,0,1,1,1, 0,0,0,1,0},
-    
-    {1,0,0,0,0, 0,0,1,1,0, 0,0,0,0,0, 1,0,0,1,0},
-    {1,0,0,0,0, 0,1,0,0,0, 0,0,1,0,0, 1,1,1,0,0},
-    {0,1,0,0,0, 0,1,0,0,0, 0,1,0,0,1, 0,0,0,0,0},
-    {0,0,1,1,0, 0,0,0,0,0, 1,0,0,0,1, 0,0,0,0,0},
-
-    {0,0,0,0,1, 1,1,1,1,1, 1,0,0,0,1, 0,0,0,0,0},
-    {0,0,0,0,0, 0,0,0,0,0, 0,1,1,1,0, 0,0,0,0,0}
 };
 
 static void write(uint8_t bytes, uint8_t isData) {
@@ -184,21 +161,16 @@ void NokiaLCD_WriteChar(char code) {
 	}
 }
 
-void NokiaLCD_CustomBitmap(uint8_t x, uint8_t y, uint8_t direction) {
+void NokiaLCD_CustomBitmap(uint8_t xoffset, uint8_t yoffset, uint8_t isFlipX) {
 	uint8_t col, row;
-	
-	if (direction) {
+	for (row = 0; row < 20; row++) {
 		for (col = 0; col < 20; col++) {
-    		for (row = 0; row < 20; row++) {
-        		NokiaLCD_SetPixel(x+col, y+row, arr[row][col]);
-    		}
-		}
-	} else {
-		for (col = 0; col < 20; col++) {
-    		for (row = 0; row < 20; row++) {
-        		NokiaLCD_SetPixel(x+col, y+row, arr[row][20-col-1]);
-    		}
-		}
+			uint8_t x = xoffset + col;
+			uint8_t y = yoffset + row;
+			uint8_t i = row;
+			uint8_t j = (isFlipX) ? 20-col-1 : col;
+			NokiaLCD_SetPixel(x,y, enemy_bulbasaur[i][j]);
+    	}
 	}
 }
 

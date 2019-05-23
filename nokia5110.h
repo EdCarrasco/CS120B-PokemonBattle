@@ -21,13 +21,13 @@
 #include <stdint.h>
 
 // LCD port and pins
-#define PORT_LCD PORTB
-#define DDR_LCD DDRB
-#define LCD_SCE PB2
-#define LCD_RST PB3
-#define LCD_DC PB4
-#define LCD_DIN PB5
-#define LCD_CLK PB6
+#define PORT_LCD	PORTB
+#define DDR_LCD		DDRB
+#define LCD_SCE		PB2
+#define LCD_RST		PB3
+#define LCD_DC		PB4
+#define LCD_DIN		PB5
+#define LCD_CLK		PB6
 #define LCD_CONTRAST 0x40
 
 void NokiaLCD_Init(void);

@@ -139,10 +139,31 @@ enum SceneStates {
 	SCENE_BattleResult,
 } sceneState;
 
+void test(unsigned short snes, uint8_t bit, uint8_t cursor) {
+	if (GetBit(snes, bit)) {
+		LCD_Cursor(cursor);
+		LCD_WriteData('1');
+	} else {
+		LCD_Cursor(cursor);
+		LCD_WriteData('0');
+	}
+}
+
 int SceneTick(int state) {
-	unsigned char customA[8] = {0x1f, 0x11, 0x11, 0x1f, 0x11, 0x11, 0x11, 0x00};
-	unsigned char customB[8] = {0x1f, 0x11, 0x11, 0x1f, 0x11, 0x11, 0x1f, 0x00};
+	//unsigned char customA[8] = {0x1f, 0x11, 0x11, 0x1f, 0x11, 0x11, 0x11, 0x00};
+	//unsigned char customB[8] = {0x1f, 0x11, 0x11, 0x1f, 0x11, 0x11, 0x1f, 0x00};
 	static unsigned char cursor = 1;
+	
+	unsigned short snes = SNES_ReadController();
+	//uint8_t i;
+	if (SNES_ButtonB(snes)) {
+		LCD_Cursor(cursor++);
+		LCD_WriteData('B');
+	}
+	if (SNES_ButtonY(snes)) {
+		LCD_Cursor(cursor++);
+		LCD_WriteData('Y');
+	}
 	
 	switch (state) {
 		case SCENE_Start:
@@ -151,11 +172,11 @@ int SceneTick(int state) {
 			break;
 		case SCENE_MainMenu:
 			state = SCENE_MainMenu;
-			LCD_DisplayString(1,  " Start  ");
-			LCD_DisplayString(9,  " Setting");
-			LCD_DisplayString(17, " Pokemon");
-			LCD_DisplayString(25, " Exit   ");
-			if (buttonUp) {
+			//LCD_DisplayString(1,  " Start  ");
+			//LCD_DisplayString(9,  " Setting");
+			//LCD_DisplayString(17, " Pokemon");
+			//LCD_DisplayString(25, " Exit   ");
+			/*if (buttonUp) {
 				buttonUp = 0;
 				cursor = (cursor <= 16) ? cursor : cursor - 16;
 			} else if (buttonDown) {
@@ -171,6 +192,7 @@ int SceneTick(int state) {
 			LCD_Cursor(cursor);
 			LCD_WriteData(LCD_MENU_SELECTOR);
 			LCD_Cursor(cursor);
+			*/
 			break;
 		case SCENE_Battle:
 			if (buttonUp) {

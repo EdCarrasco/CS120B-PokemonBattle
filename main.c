@@ -16,10 +16,12 @@
 #include "bit.h"
 #include "lcd.h"
 #include "nokia5110.h"
+#include "snescontroller.h"
 
 #include "definitions.h"
 #include "pokemon.h"
 #include "move.h"
+//#include "sprites.h"
 
 #include "tasks.h"
 #include "timer.h"
@@ -85,7 +87,7 @@ void Display_BulbasaurEnemy(void) {
 // NokiaLCD at scale 1 has 14 columns, 7 rows
 int main(void)
 {
-	DDRA = 0x00; PORTA = 0xFF; // A input (A4..A0 buttons and A7..A5 SNES buttons)
+	DDRA = 0x06;// PORTA = 0xFF;//PORTA = 0xFF; // A input (A4..A0 buttons and A7..A5 SNES buttons)
 	DDRB = 0xFF; PORTB = 0x00; // B output (B1B0 = LCD and B6..B2 = Nokia)
 	DDRD = 0xFF; PORTD = 0x00; // D output (LCD)
 	
@@ -98,8 +100,8 @@ int main(void)
 	TimerSet(tasksPeriod);
 	TimerOn();
 	
-	Pokemon pokemon1 = Pokemon_Squirtle();
-	Pokemon pokemon2 = Pokemon_Charmander();
+	//Pokemon pokemon1 = Pokemon_Squirtle();
+	//Pokemon pokemon2 = Pokemon_Charmander();
 	
 	NokiaLCD_WriteString("Bulbasaur");
 	uint8_t enemy_xoffset = 84-1-25;
