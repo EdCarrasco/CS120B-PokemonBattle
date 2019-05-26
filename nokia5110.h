@@ -38,7 +38,7 @@ void NokiaLCD_SetScale(uint8_t scale);
 void NokiaLCD_WriteChar(char code);
 void NokiaLCD_WriteString(const char *str);
 void NokiaLCD_SetCursor(uint8_t x, uint8_t y);
-void NokiaLCD_SetLine(uint8_t line);
+void NokiaLCD_SetLine(uint8_t line, uint8_t clearLine);
 void NokiaLCD_Render(void);
 
 void NokiaLCD_CustomBitmap(const uint8_t array[20][3], uint8_t xoffset, uint8_t yoffset, uint8_t direction);

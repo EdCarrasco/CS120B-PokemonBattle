@@ -21,7 +21,7 @@
 #include "definitions.h"
 #include "pokemon.h"
 #include "move.h"
-#include "sprites.h"
+//#include "sprites.h"
 
 #include "tasks.h"
 #include "timer.h"
@@ -96,6 +96,11 @@ int main(void)
 	tasks[i].period = SNES_Button_Period;
 	tasks[i].elapsedTime = tasks[i].period;
 	tasks[i].TickFunction = &SNES_B_Tick;
+	i++;
+	tasks[i].state = SNES_X_Released;
+	tasks[i].period = SNES_Button_Period;
+	tasks[i].elapsedTime = tasks[i].period;
+	tasks[i].TickFunction = &SNES_X_Tick;
 	i++;
 	tasks[i].state = SCENE_Start;
 	tasks[i].period = scenePeriod;

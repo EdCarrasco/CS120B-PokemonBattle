@@ -27,7 +27,7 @@ static struct {
 	uint8_t screen[504]; // 84 x 48 = 4032 --> 4032 / 8 = 504
 	uint8_t cursorX;
 	uint8_t cursorY;
-	uint8_t scale; // 1 to 7
+	uint8_t scale; // 1: fits 7 lines of 14 characters
 } nokiaLCD = {
 	.cursorX = 0,
 	.cursorY = 0,
@@ -209,9 +209,18 @@ void NokiaLCD_SetCursor(uint8_t x, uint8_t y) {
 	nokiaLCD.cursorY = y;
 }
 
-void NokiaLCD_SetLine(uint8_t line) {
+void NokiaLCD_SetLine(uint8_t line, uint8_t clearLine) {
 	nokiaLCD.cursorX = 0;
 	nokiaLCD.cursorY = (line - 1) * 8 * nokiaLCD.scale;
+	
+	if (clearLine) {
+		uint8_t x,y;
+		for (y = nokiaLCD.cursorY; y < 48; y++) {
+			for (x = 0; x < 84; x++) {
+				NokiaLCD_SetPixel(x,y, 0);
+			}
+		}
+	}
 }
 
 void NokiaLCD_Render(void) {

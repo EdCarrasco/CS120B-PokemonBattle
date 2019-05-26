@@ -9,13 +9,10 @@
 #ifndef TASKS_H_
 #define TASKS_H_
 
-#define TASKS_SIZE	4
-#define LCD_MENU_SELECTOR '*'
+#include "sprites.h"
 
-#define INPUT_UP (~PINA & 0x01)
-#define INPUT_RIGHT ((~PINA & 0x02) >> 1)
-#define INPUT_DOWN ((~PINA & 0x04) >> 2)
-#define INPUT_LEFT ((~PINA & 0x08) >> 3)
+#define TASKS_SIZE	5
+#define LCD_MENU_SELECTOR '*'
 
 unsigned long scenePeriod = 200; // ms
 unsigned long buttonPeriod = 100; // ms
@@ -31,24 +28,21 @@ typedef struct _Task {
 
 Task tasks[TASKS_SIZE];
 
-enum ButtonUpStates {BTN_Up_Release, BTN_Up_Pressed} buttonUpState;
-enum ButtonDownStates {BTN_Down_Release, BTN_Down_Pressed} buttonDownState;
-enum ButtonRightStates {BTN_Right_Release, BTN_Right_Pressed} buttonRightState;
-enum ButtonLeftStates {BTN_Left_Release, BTN_Left_Pressed} buttonLeftState;
-
-unsigned char buttonUp = 0;
-unsigned char buttonDown = 0;
-unsigned char buttonRight = 0;
-unsigned char buttonLeft = 0;
-
-enum Scene_States {SCENE_Start, SCENE_MainMenu, SCENE_Battle, SCENE_Pokemon, SCENE_Settings} sceneState;
+enum SNES_LEFT_States {SNES_LEFT_Released, SNES_LEFT_Pressed} SNES_LEFT_State;
+enum SNES_RIGHT_States {SNES_RIGHT_Released, SNES_RIGHT_Pressed} SNES_RIGHT_State;
+enum Scene_States {SCENE_Start, SCENE_MainMenu, SCENE_Battle, SCENE_Pokemon, SCENE_Settings,
+	SCENE_BattleMoves	
+} sceneState;
 enum MENU_ITEMS {MI_TopLeft, MI_TopRight, MI_BotLeft, MI_BotRight};
 
 int8_t menuIndex = MI_TopLeft;
 int8_t menuLength = 4;
 uint8_t sceneIndex = SCENE_MainMenu;
+uint8_t pressedB = 0; // TODO: Combine into one variable or queue
+uint8_t pressedX = 0;
 
-Pokemon player[6];
+Pokemon playerPokemon;
+Pokemon enemyPokemon;
 
 void clearMenuSelector() {
 	uint8_t i;
@@ -74,33 +68,31 @@ void hoverMenuItem() {
 		case SCENE_MainMenu:
 			switch (menuIndex) {
 				case MI_TopLeft:
-					NokiaLCD_SetLine(3);
-					NokiaLCD_WriteString("CATCH         ");
-					NokiaLCD_SetLine(4);
+					NokiaLCD_SetLine(4, 1);
 					NokiaLCD_WriteString("Find Pokemon  in the tall   grass! ");
 					break;
 				case MI_TopRight:
-					NokiaLCD_SetLine(3);
-					NokiaLCD_WriteString("GYM           ");
-					NokiaLCD_SetLine(4);
+					NokiaLCD_SetLine(4, 1);
 					NokiaLCD_WriteString("Battle other  trainers!            ");
 					break;
 				case MI_BotLeft:
-					NokiaLCD_SetLine(3);
-					NokiaLCD_WriteString("POKEMON           ");
-					NokiaLCD_SetLine(4);
+					NokiaLCD_SetLine(4, 1);
 					NokiaLCD_WriteString("View your     Pokemon!             ");
 					break;
 				case MI_BotRight:
-					NokiaLCD_SetLine(3);
-					NokiaLCD_WriteString("SETTINGS           ");
-					NokiaLCD_SetLine(4);
+					NokiaLCD_SetLine(4, 1);
 					NokiaLCD_WriteString("Set difficultyand other     things!");
 					break;
 			}
 			break;
 		case SCENE_Battle:
-			// do nothing
+			// no changes in NokiaLCD from menu items
+			break;
+		case SCENE_BattleMoves:
+			NokiaLCD_Clear();
+			NokiaLCD_WriteString(playerPokemon.moves[menuIndex].name);
+			NokiaLCD_SetLine(2, 0);
+			NokiaLCD_WriteString(playerPokemon.moves[menuIndex].description);
 			break;
 		case SCENE_Pokemon:
 			// TODO
@@ -109,6 +101,33 @@ void hoverMenuItem() {
 			// TODO
 			break;
 	}
+}
+
+void setMenu(uint8_t index) {
+	LCD_ClearScreen();
+	switch (index) {
+		case SCENE_MainMenu:
+			LCD_DisplayMenu4("Catch", "Gym", "Pokemon", "Setting");
+			menuLength = 4;
+			break;
+		case SCENE_Battle:
+			LCD_DisplayMenu4("Fight", "Pokedex", "Switch", "Escape");
+			menuLength = 4;
+			break;
+		case SCENE_BattleMoves:
+			LCD_DisplayMenu4(playerPokemon.moves[0].name, playerPokemon.moves[1].name, playerPokemon.moves[2].name, playerPokemon.moves[3].name);
+			menuLength = 4;
+			break;
+		case SCENE_Pokemon:
+			LCD_DisplayMenu2("Main", "Back");
+			menuLength = 2;
+			break;
+		case SCENE_Settings:
+			LCD_DisplayMenu2("Diff", "Sound");
+			menuLength = 2;
+			break;
+	}
+	setMenuIndex(0);
 }
 
 void setScene(uint8_t index) {
@@ -117,52 +136,52 @@ void setScene(uint8_t index) {
 	switch (index) {
 		case SCENE_MainMenu:
 			NokiaLCD_WriteString("  Main Menu   ");
-			LCD_DisplayMenu4("Catch", "Gym", "Pokemon", "Setting");
-			menuLength = 4;
-			
 			break;
 		case SCENE_Battle:
-			NokiaLCD_WriteString("Bulbasaur");
+			enemyPokemon = new_Pokemon(ID_CHARMANDER);
+			playerPokemon = new_Pokemon(ID_BULBASAUR);
+			
+			NokiaLCD_SetCursor(0,0);
+			NokiaLCD_WriteString(enemyPokemon.name);
 			uint8_t enemy_xoffset = 84-1-25;
 			uint8_t enemy_yoffset = 0;
-			NokiaLCD_CustomBitmap(enemy_charmander_bits, enemy_xoffset, enemy_yoffset, 0);
+			NokiaLCD_CustomBitmap(bitmaps[enemyPokemon.spriteFrontIndex], enemy_xoffset, enemy_yoffset, 0);
 			NokiaLCD_SetCursor(0,8);
 			NokiaLCD_WriteString("HP");
 			NokiaLCD_HealthBar(12, 10, 50);
-
+			
+			NokiaLCD_SetCursor(31,8*4);
+			NokiaLCD_WriteString(playerPokemon.name);
 			uint8_t player_xoffset = 0;
 			uint8_t player_yoffset = 48-1-24;
-			NokiaLCD_CustomBitmap(enemy_bulbasaur_bits, player_xoffset, player_yoffset, 1);
-			
-			LCD_DisplayMenu4("Fight", "View", "Swap", "Escape");
-			menuLength = 4;
+			NokiaLCD_CustomBitmap(bitmaps[playerPokemon.spriteBackIndex], player_xoffset, player_yoffset, 1);
+			NokiaLCD_SetCursor(24+49, 8*5);
+			NokiaLCD_WriteString("HP");
+			NokiaLCD_HealthBar(32, 42, 50);
 			
 			break;
+		case SCENE_BattleMoves: {
+			
+			break; 
+		}
 		case SCENE_Pokemon:
-			LCD_DisplayMenu2("Main", "Back");
-			menuLength = 2;
 			NokiaLCD_WriteString("    Pokemon   ");
 			break;
 		case SCENE_Settings:
-			LCD_DisplayMenu2("Diff", "Sound");
-			menuLength = 2;
 			NokiaLCD_WriteString("   Settings   ");
 			break;
 		default:
 			break;
 	}
-	setMenuIndex(0);
 	hoverMenuItem();
 }
-
-uint8_t pressedB = 0;
-
 
 int Scene_Tick(int state) {
 	switch (state) {
 		case SCENE_Start:
 			state = SCENE_MainMenu;
-			setScene(SCENE_MainMenu);
+			setMenu(state);
+			setScene(state);
 			break;
 		case SCENE_MainMenu:
 			if (pressedB) {
@@ -170,19 +189,23 @@ int Scene_Tick(int state) {
 				switch(menuIndex) {
 					case MI_TopLeft:
 						state = SCENE_Battle;
-						setScene(SCENE_Battle);
+						setMenu(state);
+						setScene(state);
 						break;
 					case MI_TopRight:
 						state = SCENE_Battle;
-						setScene(SCENE_Battle);
+						setMenu(state);
+						setScene(state);
 						break;
 					case MI_BotLeft:
 						state = SCENE_Pokemon;
-						setScene(SCENE_Pokemon);
+						setMenu(state);
+						setScene(state);
 						break;
 					case MI_BotRight:
 						state = SCENE_Settings;
-						setScene(SCENE_Settings);
+						setMenu(state);
+						setScene(state);
 						break;
 				}
 			} else {
@@ -194,19 +217,69 @@ int Scene_Tick(int state) {
 				pressedB = 0;
 				switch(menuIndex) {
 					case MI_TopLeft:
+						state = SCENE_BattleMoves;
+						setMenu(state);
+						setScene(state);
+						break;
+					case MI_TopRight: // Pokedex
+						// TODO: Pokedex
+						break;
+					case MI_BotLeft: // Switch
+						// TODO: Switch
+						break;
+					case MI_BotRight: // Escape
+						state = SCENE_MainMenu;
+						setMenu(state);
+						setScene(state);
+						break;
+				}
+			} else if (pressedX) {
+				pressedX = 0;
+				state = SCENE_MainMenu;
+				setMenu(state);
+				setScene(state);
+			} else {
+				state = SCENE_Battle;
+			}
+			break;
+		case SCENE_BattleMoves:
+			if (pressedB) {
+				pressedB = 0;
+				switch (menuIndex) {
+					case MI_TopLeft:
 						break;
 					case MI_TopRight:
 						break;
 					case MI_BotLeft:
 						break;
 					case MI_BotRight:
-						state = SCENE_MainMenu;
-						setScene(SCENE_MainMenu);
 						break;
 				}
+			} else if (pressedX) {
+				pressedX = 0;
+				state = SCENE_Battle;
+				setMenu(state);
+				setScene(state);
 			}
 			break;
 		case SCENE_Pokemon:
+			if (pressedB) {
+				pressedB = 0;
+				switch (menuIndex) {
+					case MI_TopLeft:
+						// TODO
+						break;
+					case MI_TopRight:
+						// TODO
+						break;
+					case MI_BotLeft:
+						// TODO
+						break;
+					case MI_BotRight:
+						// TODO
+						break;
+				}
+			}
 			break;
 		case SCENE_Settings:
 			break;
@@ -239,7 +312,24 @@ int SNES_B_Tick(int state) {
 	return state;
 }
 
-enum SNES_LEFT_States {SNES_LEFT_Released, SNES_LEFT_Pressed} SNES_LEFT_State;
+enum SNES_X_States {SNES_X_Released, SNES_X_Pressed} SNES_X_State;
+int SNES_X_Tick(int state) {
+	switch(state) {
+		case SNES_X_Released:
+			if (SNES_X) {
+				state = SNES_X_Pressed;
+				pressedX = 1;
+			} else {
+				state = SNES_X_Released;
+			}
+			break;
+		case SNES_X_Pressed:
+			state = (SNES_X) ? SNES_X_Pressed : SNES_X_Released;
+			break;
+	}
+	return state;
+}
+
 int SNES_LEFT_Tick(int state) {
 	switch(state) {
 		case SNES_LEFT_Released:
@@ -258,7 +348,7 @@ int SNES_LEFT_Tick(int state) {
 	return state;
 }
 
-enum SNES_RIGHT_States {SNES_RIGHT_Released, SNES_RIGHT_Pressed} SNES_RIGHT_State;
+
 int SNES_RIGHT_Tick(int state) {
 	switch(state) {
 		case SNES_RIGHT_Released:

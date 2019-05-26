@@ -90,7 +90,6 @@ void LCD_WriteCustomString(unsigned char column, unsigned char **data_2Darray) {
 }
 
 void LCD_DisplayMenu4(char *item1, char *item2, char *item3, char *item4) {
-	LCD_ClearScreen();
 	LCD_Cursor(1);
 	LCD_DisplayString(1, item1);
 	LCD_DisplayString(9, item2);

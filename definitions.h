@@ -9,6 +9,9 @@
 #ifndef DEFINITIONS_H_
 #define DEFINITIONS_H_
 
+#define BITMAP_BULBASAUR_FRONT		0
+#define BITMAP_CHARMANDER_FRONT		1
+
 #define STR_BULBASAUR	"Bulbasaur"
 #define STR_SQUIRTLE	"Squirtle"
 #define STR_CHARMANDER	"Charmander"
@@ -61,7 +64,7 @@
 #define HIT_LOW			75
 #define HIT_NORMAL		90
 #define HIT_HIGH		95
-#define HIT_VERYHIGH	99
+#define HIT_ALWAYS		100
 
 #define CRIT_VERYLOW	1
 #define CRIT_LOW		5
