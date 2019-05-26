@@ -61,7 +61,7 @@ uint16_t SNES_ReadController(void) {
 
 uint8_t SNES_ButtonB(uint16_t snes_data) { return snes_data & 0x01; }
 uint8_t SNES_ButtonY(uint16_t snes_data) { return (snes_data >> 1) & 0x01; }
-/*uint8_t SNES_ButtonSelect(uint16_t snes_data) { return (snes_data >> 2) & 0x01; }
+uint8_t SNES_ButtonSelect(uint16_t snes_data) { return (snes_data >> 2) & 0x01; }
 uint8_t SNES_ButtonStart(uint16_t snes_data) { return (snes_data >> 3) & 0x01; }
 uint8_t SNES_ButtonUp(uint16_t snes_data) { return (snes_data >> 4) & 0x01; }
 uint8_t SNES_ButtonDown(uint16_t snes_data) { return (snes_data >> 5) & 0x01; }
@@ -69,7 +69,7 @@ uint8_t SNES_ButtonLeft(uint16_t snes_data) { return (snes_data >> 6) & 0x01; }
 uint8_t SNES_ButtonRight(uint16_t snes_data) { return (snes_data >> 7) & 0x01; }
 uint8_t SNES_ButtonA(uint16_t snes_data) { return (snes_data >> 8) & 0x01; }
 uint8_t SNES_ButtonX(uint16_t snes_data) { return (snes_data >> 9) & 0x01; }
-uint8_t SNES_ButtonL(uint16_t snes_data) { return (snes_data >> 9) & 0x01; }
-uint8_t SNES_ButtonR(uint16_t snes_data) { return (snes_data >> 9) & 0x01; }
-*/
+uint8_t SNES_ButtonL(uint16_t snes_data) { return (snes_data >> 10) & 0x01; }
+uint8_t SNES_ButtonR(uint16_t snes_data) { return (snes_data >> 11) & 0x01; }
+
 #endif /* SNESCONTROLLER_H_ */

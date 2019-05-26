@@ -21,7 +21,7 @@
 #include "definitions.h"
 #include "pokemon.h"
 #include "move.h"
-//#include "sprites.h"
+#include "sprites.h"
 
 #include "tasks.h"
 #include "timer.h"
@@ -106,14 +106,14 @@ int main(void)
 	NokiaLCD_WriteString("Bulbasaur");
 	uint8_t enemy_xoffset = 84-1-25;
 	uint8_t enemy_yoffset = 0;
-	NokiaLCD_CustomBitmap(enemy_xoffset, enemy_yoffset, 1);
+	NokiaLCD_CustomBitmap(enemy_charmander_bits, enemy_xoffset, enemy_yoffset, 0);
 	NokiaLCD_SetCursor(0,8);
 	NokiaLCD_WriteString("HP");
 	NokiaLCD_HealthBar(12, 10, 50);
 
 	uint8_t player_xoffset = 0;
 	uint8_t player_yoffset = 48-1-24;
-	NokiaLCD_CustomBitmap(player_xoffset, player_yoffset, 0);
+	NokiaLCD_CustomBitmap(enemy_bulbasaur_bits, player_xoffset, player_yoffset, 1);
 	
 	//Display_BulbasaurEnemy();
 	//NokiaLCD_WriteChar(0x7f);

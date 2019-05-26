@@ -17,7 +17,7 @@
 #include <util/delay.h>
 #include "nokia5110.h"
 #include "nokia5110_chars.h"
-#include "sprites.h"
+//#include "sprites.h"
 
 /************************************************************************/
 /* PRIVATE                                                                     */
@@ -161,16 +161,31 @@ void NokiaLCD_WriteChar(char code) {
 	}
 }
 
-void NokiaLCD_CustomBitmap(uint8_t xoffset, uint8_t yoffset, uint8_t isFlipX) {
-	uint8_t col, row;
+void NokiaLCD_CustomBitmap(uint8_t array[20][3], uint8_t xoffset, uint8_t yoffset, uint8_t flipX) {
+	/*uint8_t col, row;
 	for (row = 0; row < 20; row++) {
 		for (col = 0; col < 20; col++) {
 			uint8_t x = xoffset + col;
 			uint8_t y = yoffset + row;
 			uint8_t i = row;
-			uint8_t j = (isFlipX) ? 20-col-1 : col;
+			uint8_t j = (flipX) ? 20-col-1 : col;
 			NokiaLCD_SetPixel(x,y, enemy_bulbasaur[i][j]);
     	}
+	}*/
+	const uint8_t ROWS = 20, COLS = 3;
+	uint8_t col, row, bit;
+	for (row = 0; row < ROWS; row++) {
+		for (col = 0; col < COLS; col++) {
+			for (bit = 0; bit < 8; bit++) {
+				uint8_t x = xoffset + (col*8) + bit;
+				uint8_t y = yoffset + row;
+				uint8_t i = row;
+				uint8_t j = (flipX) ? COLS-col-1 : col;
+				uint8_t b = (flipX) ? bit : 7-bit;
+				uint8_t value = (array[i][j] >> b) & 0x01;
+				NokiaLCD_SetPixel(x, y, value);
+			}
+		}
 	}
 }
 

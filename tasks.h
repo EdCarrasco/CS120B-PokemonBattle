@@ -164,6 +164,14 @@ int SceneTick(int state) {
 		LCD_Cursor(cursor++);
 		LCD_WriteData('Y');
 	}
+	if (SNES_ButtonX(snes)) {
+		LCD_Cursor(cursor++);
+		LCD_WriteData('X');
+	}
+	if (SNES_ButtonA(snes)) {
+		LCD_Cursor(cursor++);
+		LCD_WriteData('A');
+	}
 	
 	switch (state) {
 		case SCENE_Start:
