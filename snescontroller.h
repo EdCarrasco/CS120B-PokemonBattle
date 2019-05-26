@@ -37,8 +37,23 @@ youtube.com/watch?v=DSAs789t42k
 #define CLR_BIT(p,i) ((p) &= ~(1 << (i)))
 #define GET_BIT(p,i) ((p) & (1 << (i)))
 
-uint16_t SNES_ReadController(void) {
-	uint16_t snes_data = 0x0000;
+uint16_t snes_data = 0x00;
+
+#define SNES_B		snes_data & 0x01
+#define SNES_Y		(snes_data >> 1) & 0x01
+#define SNES_SELECT	(snes_data >> 2) & 0x01
+#define SNES_START	(snes_data >> 3) & 0x01
+#define SNES_UP		(snes_data >> 4) & 0x01
+#define SNES_DOWN	(snes_data >> 5) & 0x01
+#define SNES_LEFT	(snes_data >> 6) & 0x01
+#define SNES_RIGHT	(snes_data >> 7) & 0x01
+#define SNES_A		(snes_data >> 8) & 0x01
+#define SNES_X		(snes_data >> 9) & 0x01
+#define SNES_L		(snes_data >> 10) & 0x01
+#define SNES_R		(snes_data >> 11) & 0x01
+
+void SNES_ReadController(void) {
+	//uint16_t snes_data = 0x0000;
 	SNES_PORT = SET_BIT(SNES_PIN, SNES_LATCH);
 	_delay_us(12);
 	SNES_PORT = CLR_BIT(SNES_PIN, SNES_LATCH);
@@ -56,7 +71,7 @@ uint16_t SNES_ReadController(void) {
 		SNES_PORT = CLR_BIT(SNES_PIN, SNES_CLOCK);
 		_delay_us(6);
 	}
-	return snes_data;
+	//return snes_data;
 }
 
 uint8_t SNES_ButtonB(uint16_t snes_data) { return snes_data & 0x01; }

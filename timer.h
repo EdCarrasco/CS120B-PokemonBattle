@@ -49,6 +49,7 @@ void TimerOff() {
 
 
 void TimerISR() {
+	SNES_ReadController();
     unsigned char i;
     for (i = 0; i < TASKS_SIZE; i++) {
         if (tasks[i].elapsedTime >= tasks[i].period) {
@@ -57,6 +58,7 @@ void TimerISR() {
         }
         tasks[i].elapsedTime += tasksPeriod;
     }
+	NokiaLCD_Render();
 }
 
 // In our approach, the C programmer does not touch this ISR, but rather TimerISR()

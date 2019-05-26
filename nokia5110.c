@@ -161,17 +161,7 @@ void NokiaLCD_WriteChar(char code) {
 	}
 }
 
-void NokiaLCD_CustomBitmap(uint8_t array[20][3], uint8_t xoffset, uint8_t yoffset, uint8_t flipX) {
-	/*uint8_t col, row;
-	for (row = 0; row < 20; row++) {
-		for (col = 0; col < 20; col++) {
-			uint8_t x = xoffset + col;
-			uint8_t y = yoffset + row;
-			uint8_t i = row;
-			uint8_t j = (flipX) ? 20-col-1 : col;
-			NokiaLCD_SetPixel(x,y, enemy_bulbasaur[i][j]);
-    	}
-	}*/
+void NokiaLCD_CustomBitmap(const uint8_t bitmap[20][3], uint8_t xoffset, uint8_t yoffset, uint8_t flipX) {
 	const uint8_t ROWS = 20, COLS = 3;
 	uint8_t col, row, bit;
 	for (row = 0; row < ROWS; row++) {
@@ -179,10 +169,10 @@ void NokiaLCD_CustomBitmap(uint8_t array[20][3], uint8_t xoffset, uint8_t yoffse
 			for (bit = 0; bit < 8; bit++) {
 				uint8_t x = xoffset + (col*8) + bit;
 				uint8_t y = yoffset + row;
-				uint8_t i = row;
-				uint8_t j = (flipX) ? COLS-col-1 : col;
+				uint8_t r = row;
+				uint8_t c = (flipX) ? COLS-col-1 : col;
 				uint8_t b = (flipX) ? bit : 7-bit;
-				uint8_t value = (array[i][j] >> b) & 0x01;
+				uint8_t value = (bitmap[r][c] >> b) & 0x01;
 				NokiaLCD_SetPixel(x, y, value);
 			}
 		}
@@ -217,6 +207,11 @@ void NokiaLCD_WriteString(const char* str) {
 void NokiaLCD_SetCursor(uint8_t x, uint8_t y) {
 	nokiaLCD.cursorX = x;
 	nokiaLCD.cursorY = y;
+}
+
+void NokiaLCD_SetLine(uint8_t line) {
+	nokiaLCD.cursorX = 0;
+	nokiaLCD.cursorY = (line - 1) * 8 * nokiaLCD.scale;
 }
 
 void NokiaLCD_Render(void) {

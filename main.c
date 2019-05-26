@@ -28,62 +28,6 @@
 
 //unsigned char EEMEM eeprom_array[10];
 
-void Display_BulbasaurEnemy(void) {
-	// First row
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x81);
-	NokiaLCD_WriteChar(0x82);
-	NokiaLCD_WriteChar(0x83);
-	NokiaLCD_WriteChar(0x00);
-
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-
-	// Second row
-	NokiaLCD_WriteChar(0x84);
-	NokiaLCD_WriteChar(0x85);
-	NokiaLCD_WriteChar(0x86);
-	NokiaLCD_WriteChar(0x87);
-	NokiaLCD_WriteChar(0x00);
-
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	
-	// Third row
-	NokiaLCD_WriteChar(0x89);
-	NokiaLCD_WriteChar(0x8a);
-	NokiaLCD_WriteChar(0x8b);
-	NokiaLCD_WriteChar(0x8c);
-	NokiaLCD_WriteChar(0x00);
-
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-	NokiaLCD_WriteChar(0x00);
-}
-
 // NokiaLCD at scale 1 has 14 columns, 7 rows
 int main(void)
 {
@@ -102,7 +46,7 @@ int main(void)
 	
 	//Pokemon pokemon1 = Pokemon_Squirtle();
 	//Pokemon pokemon2 = Pokemon_Charmander();
-	
+	/*
 	NokiaLCD_WriteString("Bulbasaur");
 	uint8_t enemy_xoffset = 84-1-25;
 	uint8_t enemy_yoffset = 0;
@@ -114,41 +58,49 @@ int main(void)
 	uint8_t player_xoffset = 0;
 	uint8_t player_yoffset = 48-1-24;
 	NokiaLCD_CustomBitmap(enemy_bulbasaur_bits, player_xoffset, player_yoffset, 1);
+	*/
 	
-	//Display_BulbasaurEnemy();
 	//NokiaLCD_WriteChar(0x7f);
 	//NokiaLCD_WriteString("   POKeMON    ");
 	//NokiaLCD_WriteString("   Battle     ");
 	//NokiaLCD_WriteChar(0x81);
 	//NokiaLCD_WriteString(pokemon2.move1.name);
-	NokiaLCD_Render();
 	
+	
+	//setScene(SCENE_MAIN_MENU);
+	//LCD_Cursor(1);
+	
+	
+	
+	
+	/*LCD_DisplayMenu4("Catch", "Gym", "Pokemon", "Setting");
+	menuLength = 4;
+	setMenuIndex(0);
+	
+	NokiaLCD_Clear();
+	NokiaLCD_WriteString("Main menu");
+	NokiaLCD_Render();*/
 	
 	unsigned char i = 0;
-	tasks[i].state = BTN_Up_Release;
-	tasks[i].period = buttonPeriod;
+	tasks[i].state = SNES_RIGHT_Released;
+	tasks[i].period = SNES_Button_Period;
 	tasks[i].elapsedTime = tasks[i].period;
-	tasks[i].TickFunction = &ButtonUpTick;
+	tasks[i].TickFunction = &SNES_RIGHT_Tick;
 	i++;
-	tasks[i].state = BTN_Down_Release;
-	tasks[i].period = buttonPeriod;
+	tasks[i].state = SNES_LEFT_Released;
+	tasks[i].period = SNES_Button_Period;
 	tasks[i].elapsedTime = tasks[i].period;
-	tasks[i].TickFunction = &ButtonDownTick;
+	tasks[i].TickFunction = &SNES_LEFT_Tick;
 	i++;
-	tasks[i].state = BTN_Right_Release;
-	tasks[i].period = buttonPeriod;
+	tasks[i].state = SNES_B_Released;
+	tasks[i].period = SNES_Button_Period;
 	tasks[i].elapsedTime = tasks[i].period;
-	tasks[i].TickFunction = &ButtonRightTick;
-	i++;
-	tasks[i].state = BTN_Left_Release;
-	tasks[i].period = buttonPeriod;
-	tasks[i].elapsedTime = tasks[i].period;
-	tasks[i].TickFunction = &ButtonLeftTick;
+	tasks[i].TickFunction = &SNES_B_Tick;
 	i++;
 	tasks[i].state = SCENE_Start;
 	tasks[i].period = scenePeriod;
 	tasks[i].elapsedTime = tasks[i].period;
-	tasks[i].TickFunction = &SceneTick;
+	tasks[i].TickFunction = &Scene_Tick;
 	i++;
 	
     while (1) 

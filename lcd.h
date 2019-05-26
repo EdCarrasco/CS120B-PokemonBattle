@@ -19,4 +19,7 @@ void delay_ms(int miliSec);
 void LCD_WriteCustomData(unsigned char column, unsigned char *bytes);
 void LCD_WriteCustomString(unsigned char column, unsigned char **string);
 
+void LCD_DisplayMenu4(char *item1, char *item2, char *item3, char *item4);
+void LCD_DisplayMenu2(char *item1, char *item2);
+
 #endif /* LCD_H_ */
