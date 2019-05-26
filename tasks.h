@@ -41,12 +41,14 @@ unsigned char buttonDown = 0;
 unsigned char buttonRight = 0;
 unsigned char buttonLeft = 0;
 
-enum SCENES {SCENE_MAIN_MENU, SCENE_BATTLE, SCENE_POKEMON_LIST, SCENE_SETTINGS_MENU};
-enum MAIN_MENU_ITEMS {MI_CATCH, MI_GYM, MI_POKEMON, MI_SETTINGS};
+enum Scene_States {SCENE_Start, SCENE_MainMenu, SCENE_Battle, SCENE_Pokemon, SCENE_Settings} sceneState;
+enum MENU_ITEMS {MI_TopLeft, MI_TopRight, MI_BotLeft, MI_BotRight};
 
-int8_t menuIndex = MI_CATCH;
+int8_t menuIndex = MI_TopLeft;
 int8_t menuLength = 4;
-uint8_t sceneIndex = SCENE_MAIN_MENU;
+uint8_t sceneIndex = SCENE_MainMenu;
+
+Pokemon player[6];
 
 void clearMenuSelector() {
 	uint8_t i;
@@ -67,58 +69,29 @@ void setMenuIndex(int8_t index) {
 	//LCD_Cursor(cursor);
 }
 
-
-
-/*void selectMenuItem() {
-	switch(sceneIndex) {
-		case SCENE_MAIN_MENU:
-			switch(menuIndex) {
-				case MI_CATCH:
-					setScene(SCENE_BATTLE);
-					break;
-				case MI_GYM:
-					setScene(SCENE_BATTLE);
-					break;
-				case MI_POKEMON:
-					setScene(SCENE_POKEMON_LIST);
-					break;
-				case MI_SETTINGS:
-					setScene(SCENE_SETTINGS_MENU);
-					break;
-			}
-			break;
-		case SCENE_BATTLE:
-			break;
-		case SCENE_POKEMON_LIST:
-			break;
-		case SCENE_SETTINGS_MENU:
-			break;
-	}
-}*/
-
 void hoverMenuItem() {
 	switch (sceneIndex) {
-		case SCENE_MAIN_MENU:
+		case SCENE_MainMenu:
 			switch (menuIndex) {
-				case MI_CATCH:
+				case MI_TopLeft:
 					NokiaLCD_SetLine(3);
 					NokiaLCD_WriteString("CATCH         ");
 					NokiaLCD_SetLine(4);
 					NokiaLCD_WriteString("Find Pokemon  in the tall   grass! ");
 					break;
-				case MI_GYM:
+				case MI_TopRight:
 					NokiaLCD_SetLine(3);
 					NokiaLCD_WriteString("GYM           ");
 					NokiaLCD_SetLine(4);
 					NokiaLCD_WriteString("Battle other  trainers!            ");
 					break;
-				case MI_POKEMON:
+				case MI_BotLeft:
 					NokiaLCD_SetLine(3);
 					NokiaLCD_WriteString("POKEMON           ");
 					NokiaLCD_SetLine(4);
 					NokiaLCD_WriteString("View your     Pokemon!             ");
 					break;
-				case MI_SETTINGS:
+				case MI_BotRight:
 					NokiaLCD_SetLine(3);
 					NokiaLCD_WriteString("SETTINGS           ");
 					NokiaLCD_SetLine(4);
@@ -126,37 +99,54 @@ void hoverMenuItem() {
 					break;
 			}
 			break;
-		case SCENE_BATTLE:
+		case SCENE_Battle:
+			// do nothing
 			break;
-		case SCENE_POKEMON_LIST:
+		case SCENE_Pokemon:
+			// TODO
 			break;
-		case SCENE_SETTINGS_MENU:
+		case SCENE_Settings:
+			// TODO
 			break;
 	}
 }
 
 void setScene(uint8_t index) {
+	sceneIndex = index;
 	NokiaLCD_Clear();
 	switch (index) {
-		case SCENE_MAIN_MENU:
+		case SCENE_MainMenu:
 			NokiaLCD_WriteString("  Main Menu   ");
 			LCD_DisplayMenu4("Catch", "Gym", "Pokemon", "Setting");
 			menuLength = 4;
+			
 			break;
-		case SCENE_BATTLE:
-			NokiaLCD_WriteString("    Battle 2  ");
+		case SCENE_Battle:
+			NokiaLCD_WriteString("Bulbasaur");
+			uint8_t enemy_xoffset = 84-1-25;
+			uint8_t enemy_yoffset = 0;
+			NokiaLCD_CustomBitmap(enemy_charmander_bits, enemy_xoffset, enemy_yoffset, 0);
+			NokiaLCD_SetCursor(0,8);
+			NokiaLCD_WriteString("HP");
+			NokiaLCD_HealthBar(12, 10, 50);
+
+			uint8_t player_xoffset = 0;
+			uint8_t player_yoffset = 48-1-24;
+			NokiaLCD_CustomBitmap(enemy_bulbasaur_bits, player_xoffset, player_yoffset, 1);
+			
 			LCD_DisplayMenu4("Fight", "View", "Swap", "Escape");
 			menuLength = 4;
+			
 			break;
-		case SCENE_POKEMON_LIST:
-			NokiaLCD_WriteString("    Pokemon   ");
+		case SCENE_Pokemon:
 			LCD_DisplayMenu2("Main", "Back");
 			menuLength = 2;
+			NokiaLCD_WriteString("    Pokemon   ");
 			break;
-		case SCENE_SETTINGS_MENU:
-			NokiaLCD_WriteString("   Settings   ");
+		case SCENE_Settings:
 			LCD_DisplayMenu2("Diff", "Sound");
 			menuLength = 2;
+			NokiaLCD_WriteString("   Settings   ");
 			break;
 		default:
 			break;
@@ -167,37 +157,54 @@ void setScene(uint8_t index) {
 
 uint8_t pressedB = 0;
 
-enum Scene_States {SCENE_Start, SCENE_MainMenu, SCENE_Battle, SCENE_Pokemon, SCENE_Settings} sceneState;
+
 int Scene_Tick(int state) {
 	switch (state) {
 		case SCENE_Start:
 			state = SCENE_MainMenu;
-			setScene(SCENE_MAIN_MENU);
+			setScene(SCENE_MainMenu);
 			break;
 		case SCENE_MainMenu:
 			if (pressedB) {
 				pressedB = 0;
 				switch(menuIndex) {
-					case MI_CATCH:
+					case MI_TopLeft:
 						state = SCENE_Battle;
-						setScene(SCENE_BATTLE);
+						setScene(SCENE_Battle);
 						break;
-					case MI_GYM:
+					case MI_TopRight:
 						state = SCENE_Battle;
-						setScene(SCENE_BATTLE);
+						setScene(SCENE_Battle);
 						break;
-					case MI_POKEMON:
+					case MI_BotLeft:
 						state = SCENE_Pokemon;
-						setScene(SCENE_POKEMON_LIST);
+						setScene(SCENE_Pokemon);
 						break;
-					case MI_SETTINGS:
+					case MI_BotRight:
 						state = SCENE_Settings;
-						setScene(SCENE_SETTINGS_MENU);
+						setScene(SCENE_Settings);
 						break;
 				}
+			} else {
+				state = SCENE_MainMenu;
 			}
 			break;
 		case SCENE_Battle:
+			if (pressedB) {
+				pressedB = 0;
+				switch(menuIndex) {
+					case MI_TopLeft:
+						break;
+					case MI_TopRight:
+						break;
+					case MI_BotLeft:
+						break;
+					case MI_BotRight:
+						state = SCENE_MainMenu;
+						setScene(SCENE_MainMenu);
+						break;
+				}
+			}
 			break;
 		case SCENE_Pokemon:
 			break;
@@ -240,7 +247,6 @@ int SNES_LEFT_Tick(int state) {
 				state = SNES_LEFT_Pressed;
 				setMenuIndex(menuIndex-1);				
 				hoverMenuItem();
-//				NokiaLCD_Render();
 			} else {
 				state = SNES_LEFT_Released;
 			}
@@ -260,7 +266,6 @@ int SNES_RIGHT_Tick(int state) {
 				state = SNES_RIGHT_Pressed;
 				setMenuIndex(menuIndex+1);
 				hoverMenuItem();
-//				NokiaLCD_Render();
 			} else {
 				state = SNES_RIGHT_Released;
 			}
