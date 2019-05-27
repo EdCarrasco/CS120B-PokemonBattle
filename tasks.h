@@ -42,7 +42,8 @@ enum SNES_L_States {SNES_L_Released, SNES_L_Pressed} SNES_L_State;
 enum SNES_R_States {SNES_R_Released, SNES_R_Pressed} SNES_R_State;
 
 enum Scene_States {SCENE_Start, SCENE_MainMenu, SCENE_PokemonMenu, SCENE_Settings,
-	SCENE_Battle_Intro, SCENE_Battle_GymMenu, SCENE_Battle_MoveMenu, SCENE_Battle_MoveSelected, SCENE_Battle_MoveMiss, 
+	SCENE_Battle_Intro, SCENE_Battle_Menu, SCENE_Battle_MoveMenu, SCENE_Battle_MoveUsedText, 
+	SCENE_Battle_MoveMissText, SCENE_Battle_MoveHitText, SCENE_Battle_MoveEffectText
 } sceneState;
 enum MENU_ITEMS {MI_TopLeft, MI_TopRight, MI_BotLeft, MI_BotRight};
 
@@ -69,6 +70,92 @@ typedef struct _Trainer {
 } Trainer;
 
 Trainer player, enemy;
+
+typedef struct _MoveResult {
+	int8_t moveIndex;
+	int8_t isHit;
+	int8_t isCritical;
+	int8_t effectiveness;
+	int8_t damage;
+	int8_t isEffectHit;
+	int8_t effect;
+} MoveResult;
+
+MoveResult moveResult;
+
+enum TYPE_EFFECT {TE_NORMAL, TE_WEAK, TE_STRONG};
+
+int8_t getEffectiveness(uint8_t moveType, uint8_t targetType) {
+	switch (moveType) {
+		case T_NORMAL:
+			return TE_NORMAL;
+		case T_GRASS:
+			switch (targetType) {
+				case T_NORMAL:
+				return TE_NORMAL;
+				case T_GRASS:
+				case T_FIRE:
+				return TE_WEAK;
+				case T_WATER:
+				return TE_STRONG;
+			}
+			break;
+		case T_WATER:
+			switch (targetType) {
+				case T_NORMAL:
+				return TE_NORMAL;
+				case T_GRASS:
+				case T_WATER:
+				return TE_WEAK;
+				case T_FIRE:
+				return TE_STRONG;
+			}
+			break;
+		case T_FIRE:
+			switch (targetType) {
+				case T_NORMAL:
+				return TE_NORMAL;
+				case T_WATER:
+				case T_FIRE:
+				return TE_WEAK;
+				case T_GRASS:
+				return TE_STRONG;
+			}
+			break;
+		default:
+			return TE_NORMAL;
+	}
+	return TE_NORMAL;
+}
+
+void generateMoveResult(uint8_t moveIndex, Trainer *attacker, Trainer *defender) {
+	moveResult.moveIndex = moveIndex;
+	// Calculate if move hits
+	int8_t hitModifier = 0; // TODO
+	int8_t critModifier = 0; // TODO
+	moveResult.isHit = ((rand() % 100 + 1) + hitModifier <= moveList[moveIndex].hitChance);
+	moveResult.isCritical = ((rand() % 100 + 1) + critModifier <= moveList[moveIndex].criticalChance);
+	moveResult.isEffectHit = ((rand() % 100 + 1) <= moveList[moveIndex].effectChance);
+	
+	// Calculate damage multipliers (critical, effectiveness)
+	double multiplier = 1;
+	multiplier += (moveResult.isCritical) ? 0.5 : 1;
+	uint8_t moveType = moveList[moveIndex].type;
+	uint8_t targetType = (*defender).pokemon[(*defender).activeIndex].type;
+	moveResult.effectiveness = getEffectiveness(moveType, targetType);
+	switch (moveResult.effectiveness) {
+		case TE_STRONG: multiplier += 0.5; break;
+		case TE_WEAK: multiplier -= 0.5; break;
+		default: break;
+	}
+	
+	// Calculate damage additives (attack bonus, defense bonus)
+	double damage = moveList[moveIndex].baseDamage;
+	uint8_t attack = (*attacker).pokemon[(*attacker).activeIndex].attack;
+	uint8_t defense = (*defender).pokemon[(*defender).activeIndex].defense;
+	moveResult.damage = (int8_t)(damage * multiplier) + attack - defense;
+	if (moveResult.damage < 1) moveResult.damage = 1;
+}
 
 void clearMenuSelector() {
 	uint8_t i;
@@ -118,7 +205,7 @@ void hoverMenuItem() {
 			break;
 		case SCENE_Battle_Intro:
 			break;
-		case SCENE_Battle_GymMenu:
+		case SCENE_Battle_Menu:
 			// no changes in NokiaLCD from menu items
 			break;
 		case SCENE_Battle_MoveMenu:
@@ -132,9 +219,11 @@ void hoverMenuItem() {
 			NokiaLCD_WriteString(moveDescription);
 			break;
 		}
-		case SCENE_Battle_MoveSelected:
-			break;
-		case SCENE_Battle_MoveMiss:
+		case SCENE_Battle_MoveUsedText:
+		case SCENE_Battle_MoveMissText:
+		case SCENE_Battle_MoveHitText:
+		case SCENE_Battle_MoveEffectText:
+			// TODO: show animations?
 			break;
 		case SCENE_PokemonMenu:
 			// TODO
@@ -176,7 +265,7 @@ void setMenu(uint8_t state, uint8_t isMessage) {
 			LCD_DisplayString(1, "Battle Intro");
 			LCD_DisplayString(31, "OK");
 			break;
-		case SCENE_Battle_GymMenu:
+		case SCENE_Battle_Menu:
 			LCD_DisplayMenu4("Fight", "Pokedex", "Switch", "Escape");
 			menuLength = 4;
 			break;
@@ -190,7 +279,7 @@ void setMenu(uint8_t state, uint8_t isMessage) {
 			menuLength = 4;
 			break;
 		}
-		case SCENE_Battle_MoveSelected:
+		case SCENE_Battle_MoveUsedText:
 		{
 			char* pokemonName = player.pokemon[player.activeIndex].name;
 			uint8_t moveIndex = player.pokemon[player.activeIndex].moveIds[menuIndex];
@@ -206,12 +295,22 @@ void setMenu(uint8_t state, uint8_t isMessage) {
 			LCD_DisplayString(31, "OK");
 			break;
 		}
-		case SCENE_Battle_MoveMiss:
-		{
+		case SCENE_Battle_MoveMissText:
 			LCD_DisplayString(1, "It missed!");
 			LCD_DisplayString(31, "OK");
 			break;
-		}
+		case SCENE_Battle_MoveHitText:
+			if (moveResult.isCritical) {
+				LCD_DisplayString(1, "A critical hit!");
+			} else if (moveResult.effectiveness == TE_STRONG) {
+				LCD_DisplayString(1, "It is super effective!");
+			} else if (moveResult.effectiveness == TE_WEAK) {
+				LCD_DisplayString(1, "Not very effective...");
+			}
+			break;
+		case SCENE_Battle_MoveEffectText:
+			LCD_DisplayString(1, "--Effect text--");
+			break;
 		case SCENE_PokemonMenu:
 			LCD_DisplayMenu2("Moves", "Favorite");
 			menuLength = 2;
@@ -283,9 +382,9 @@ void setScene(uint8_t index) {
 		case SCENE_MainMenu:
 			NokiaLCD_WriteString("  Main Menu   ");
 			break;
-		case SCENE_Battle_GymMenu:
-		case SCENE_Battle_MoveSelected:
-		case SCENE_Battle_MoveMiss:
+		case SCENE_Battle_Menu:
+		case SCENE_Battle_MoveUsedText:
+		case SCENE_Battle_MoveMissText:
 			drawPokemonUI(&enemy, 0);
 			drawPokemonSprite(&enemy, 0);
 			drawPokemonUI(&player, 1);
@@ -362,14 +461,14 @@ int Scene_Tick(int state) {
 				enemy.activeIndex = 0;
 				enemy.favoriteIndex = 0;
 				
-				state = SCENE_Battle_GymMenu;
+				state = SCENE_Battle_Menu;
 				setMenu(state, 0);
 				setScene(state);
 			} else {
 				state = SCENE_Battle_Intro;
 			}
 			break;
-		case SCENE_Battle_GymMenu:
+		case SCENE_Battle_Menu:
 			if (pressedB) {
 				pressedB = 0;
 				switch(menuIndex) {
@@ -396,41 +495,78 @@ int Scene_Tick(int state) {
 				setMenu(state, 0);
 				setScene(state);
 			} else {
-				state = SCENE_Battle_GymMenu;
+				state = SCENE_Battle_Menu;
 			}
 			break;
 		case SCENE_Battle_MoveMenu:
 			if (pressedB) {
 				pressedB = 0;
-				state = SCENE_Battle_MoveSelected;
+				state = SCENE_Battle_MoveUsedText;
 				setMenu(state, 1);
 				setScene(state);
 				textDisplayTimer = TIME_3SEC;
+				//
+				uint8_t moveIndex = player.pokemon[player.activeIndex].moveIds[menuIndex];
+				generateMoveResult(moveIndex, &player, &enemy);
+				//
 			} else if (pressedX) {
 				pressedX = 0;
-				state = SCENE_Battle_GymMenu;
+				state = SCENE_Battle_Menu;
 				setMenu(state, 0);
 				setScene(state);
 			}
 			break;
-		case SCENE_Battle_MoveSelected:
+		case SCENE_Battle_MoveUsedText:
 			if (textDisplayTimer < 0) {
-				state = SCENE_Battle_MoveMiss;
+				//state = (moveResult.isHit) ? SCENE_Battle_MoveHitText : SCENE_Battle_MoveMissText;
+				if (!moveResult.isHit) {
+					state = SCENE_Battle_MoveMissText;
+				} else if (moveResult.isCritical || moveResult.effectiveness != TE_NORMAL) {
+					state = SCENE_Battle_MoveHitText;
+				} else if (moveResult.isEffectHit) {
+					state = SCENE_Battle_MoveEffectText;
+				}
 				setMenu(state, 1);
 				setScene(state);
 				textDisplayTimer = TIME_3SEC;
 			} else {
-				state = SCENE_Battle_MoveSelected;
+				state = SCENE_Battle_MoveUsedText;
 			}
 			break;
-		case SCENE_Battle_MoveMiss:
+		case SCENE_Battle_MoveMissText:
 			if (textDisplayTimer < 0) {
-				state = SCENE_Battle_GymMenu;
+				state = SCENE_Battle_Menu;
 				setMenu(state, 0);
 				setScene(state);
 			} else {
-				state = SCENE_Battle_MoveMiss;
+				state = SCENE_Battle_MoveMissText;
 			}
+			break;
+		case SCENE_Battle_MoveHitText:
+			if (textDisplayTimer < 0) {
+				if (moveResult.isEffectHit) {
+					state = SCENE_Battle_MoveEffectText;
+					setMenu(state, 1);
+					setScene(state);
+					textDisplayTimer = TIME_3SEC;
+				} else {
+					state = SCENE_Battle_Menu;
+					setMenu(state, 0);
+					setScene(state);
+				}
+			} else {
+				state = SCENE_Battle_MoveHitText;
+			}
+			break;
+		case SCENE_Battle_MoveEffectText:
+			if (textDisplayTimer < 0) {
+				state = SCENE_Battle_Menu;
+				setMenu(state, 0);
+				setScene(state);
+			} else {
+				state = SCENE_Battle_MoveEffectText;
+			}
+			break;
 		case SCENE_PokemonMenu:
 			if (pressedB) {
 				pressedB = 0;
@@ -481,15 +617,17 @@ int Scene_Tick(int state) {
 	switch (state) {
 		case SCENE_Start:
 		case SCENE_MainMenu:
-		case SCENE_Battle_GymMenu:
+		case SCENE_Battle_Menu:
 		case SCENE_Battle_MoveMenu:
 		case SCENE_PokemonMenu:
 		case SCENE_Settings:
 			textDisplayTimer = 0;
 			break;
 		case SCENE_Battle_Intro:
-		case SCENE_Battle_MoveSelected:
-		case SCENE_Battle_MoveMiss:
+		case SCENE_Battle_MoveUsedText:
+		case SCENE_Battle_MoveMissText:
+		case SCENE_Battle_MoveHitText:
+		case SCENE_Battle_MoveEffectText:
 			textDisplayTimer -= scenePeriod;
 			break;
 	}
