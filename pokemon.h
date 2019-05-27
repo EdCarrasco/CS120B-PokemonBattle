@@ -17,8 +17,8 @@ typedef struct _Pokemon {
 	uint8_t spriteBackIndex;
 	uint8_t type;
 	uint8_t level;
-	uint8_t healthMax;
 	uint8_t health;
+	uint8_t healthMax;
 	uint8_t status;
 	uint8_t statusTime;
 	uint8_t effect;

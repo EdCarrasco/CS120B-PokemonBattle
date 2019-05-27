@@ -41,6 +41,8 @@ int main(void)
 	DDRD = 0xFF; PORTD = 0x00; // D output (LCD)
 	
 	//unsigned char a = eeprom_read_word(&eeprom_array[0]);
+	time_t t;
+	srand((unsigned)time(&t));
 
 	LCD_Init();
 	LCD_ClearScreen();

@@ -179,10 +179,11 @@ void NokiaLCD_CustomBitmap(const uint8_t bitmap[20][3], uint8_t xoffset, uint8_t
 	}
 }
 
-void NokiaLCD_HealthBar(uint8_t xoffset, uint8_t yoffset, uint8_t percentage) {
+void NokiaLCD_HealthBar(uint8_t xoffset, uint8_t yoffset, uint8_t health, uint8_t healthMax) {
 	uint8_t width = 40;
 	uint8_t height = 5;
-	uint8_t fill = (uint8_t) map_range((double)percentage, 0, 100, (double)0, (double)(width-1));
+	//uint8_t fill = 20;//(uint8_t) map_range(percentage, 0.0, 1.0, 0.0, (double)(width-1));
+	uint8_t fill = (uint8_t)(((double) health / (double)healthMax) * (double)(width));
 	uint8_t row, col;
 	for (row = 0; row < height; row++) {
 		for (col = 0; col < width; col++) {

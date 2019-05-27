@@ -29,7 +29,7 @@ Pokemon Pokemon_Bulbasaur() {
 	pokemon.name = STR_BULBASAUR;
 	pokemon.type = T_WATER;
 	pokemon.level = 1;
-	pokemon.healthMax = HEALTH_NORMAL;
+	pokemon.health = HEALTH_NORMAL;
 	pokemon.healthMax = HEALTH_NORMAL;
 	pokemon.status = ST_NONE;
 	pokemon.statusTime = 0;
@@ -53,7 +53,7 @@ Pokemon Pokemon_Squirtle() {
 	pokemon.name = STR_SQUIRTLE;
 	pokemon.type = T_WATER;
 	pokemon.level = 1;
-	pokemon.healthMax = HEALTH_NORMAL;
+	pokemon.health = HEALTH_NORMAL;
 	pokemon.healthMax = HEALTH_NORMAL;
 	pokemon.status = ST_NONE;
 	pokemon.statusTime = 0;
@@ -76,7 +76,7 @@ Pokemon Pokemon_Charmander() {
 	pokemon.name = STR_CHARMANDER;
 	pokemon.type = T_FIRE;
 	pokemon.level = 1;
-	pokemon.healthMax = HEALTH_NORMAL;
+	pokemon.health = HEALTH_NORMAL;
 	pokemon.healthMax = HEALTH_NORMAL;
 	pokemon.status = ST_NONE;
 	pokemon.statusTime = 0;
