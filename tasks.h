@@ -71,65 +71,66 @@ typedef struct _Trainer {
 
 Trainer player, enemy;
 
-typedef struct _MoveResult {
-	int8_t moveIndex;
-	int8_t isHit;
-	int8_t isCritical;
-	int8_t effectiveness;
-	int8_t damage;
-	int8_t isEffectHit;
-	int8_t effect;
-} MoveResult;
-
-MoveResult moveResult;
-
 enum TYPE_EFFECT {TE_NORMAL, TE_WEAK, TE_STRONG};
-
-int8_t getEffectiveness(uint8_t moveType, uint8_t targetType) {
+uint8_t getEffectiveness(uint8_t moveType, uint8_t targetType) {
 	switch (moveType) {
 		case T_NORMAL:
-			return TE_NORMAL;
+		return TE_NORMAL;
 		case T_GRASS:
-			switch (targetType) {
-				case T_NORMAL:
-				return TE_NORMAL;
-				case T_GRASS:
-				case T_FIRE:
-				return TE_WEAK;
-				case T_WATER:
-				return TE_STRONG;
-			}
-			break;
-		case T_WATER:
-			switch (targetType) {
-				case T_NORMAL:
-				return TE_NORMAL;
-				case T_GRASS:
-				case T_WATER:
-				return TE_WEAK;
-				case T_FIRE:
-				return TE_STRONG;
-			}
-			break;
-		case T_FIRE:
-			switch (targetType) {
-				case T_NORMAL:
-				return TE_NORMAL;
-				case T_WATER:
-				case T_FIRE:
-				return TE_WEAK;
-				case T_GRASS:
-				return TE_STRONG;
-			}
-			break;
-		default:
+		switch (targetType) {
+			case T_NORMAL:
 			return TE_NORMAL;
+			case T_GRASS:
+			case T_FIRE:
+			return TE_WEAK;
+			case T_WATER:
+			return TE_STRONG;
+		}
+		break;
+		case T_WATER:
+		switch (targetType) {
+			case T_NORMAL:
+			return TE_NORMAL;
+			case T_GRASS:
+			case T_WATER:
+			return TE_WEAK;
+			case T_FIRE:
+			return TE_STRONG;
+		}
+		break;
+		case T_FIRE:
+		switch (targetType) {
+			case T_NORMAL:
+			return TE_NORMAL;
+			case T_WATER:
+			case T_FIRE:
+			return TE_WEAK;
+			case T_GRASS:
+			return TE_STRONG;
+		}
+		break;
+		default:
+		return TE_NORMAL;
 	}
 	return TE_NORMAL;
 }
 
+typedef struct _MoveResult {
+	char* moveName;
+	uint8_t moveIndex;
+	uint8_t isHit;
+	uint8_t isCritical;
+	uint8_t effectiveness;
+	int8_t damage;
+	uint8_t isEffectHit;
+	uint8_t effect;
+} MoveResult;
+
+MoveResult moveResult;
+
 void generateMoveResult(uint8_t moveIndex, Trainer *attacker, Trainer *defender) {
 	moveResult.moveIndex = moveIndex;
+	moveResult.moveName = moveList[moveIndex].name;
 	// Calculate if move hits
 	int8_t hitModifier = 0; // TODO
 	int8_t critModifier = 0; // TODO
@@ -155,6 +156,9 @@ void generateMoveResult(uint8_t moveIndex, Trainer *attacker, Trainer *defender)
 	uint8_t defense = (*defender).pokemon[(*defender).activeIndex].defense;
 	moveResult.damage = (int8_t)(damage * multiplier) + attack - defense;
 	if (moveResult.damage < 1) moveResult.damage = 1;
+	
+	LCD_Cursor(28);
+	LCD_WriteData(moveIndex+'0');
 }
 
 void clearMenuSelector() {
@@ -176,85 +180,9 @@ void setMenuIndex(int8_t index) {
 	//LCD_Cursor(cursor);
 }
 
-void hoverMenuItem() {
-	char* str;
-	switch (sceneIndex) {
-		case SCENE_Start:
-			break;
-		case SCENE_MainMenu:
-			switch (menuIndex) {
-				case MI_TopLeft:
-					NokiaLCD_SetLine(4, 1);
-					NokiaLCD_WriteString("Find Pokemon  in the tall   grass! ");
-					break;
-				case MI_TopRight:
-					NokiaLCD_SetLine(4, 1);
-					NokiaLCD_WriteString("Battle other  trainers!            ");
-					break;
-				case MI_BotLeft:
-					NokiaLCD_SetLine(4, 1);
-					NokiaLCD_WriteString("View your     Pokemon!             ");
-					break;
-				case MI_BotRight:
-					NokiaLCD_SetLine(4, 1);
-					NokiaLCD_WriteString("Set difficultyand other     things!");
-					break;
-				default:
-					NokiaLCD_WriteString("ERROR: menuIndex");
-			}
-			break;
-		case SCENE_Battle_Intro:
-			break;
-		case SCENE_Battle_Menu:
-			// no changes in NokiaLCD from menu items
-			break;
-		case SCENE_Battle_MoveMenu:
-		{
-			uint8_t moveIndex = player.pokemon[player.activeIndex].moveIds[menuIndex];
-			char * moveName = moveList[moveIndex].name;
-			char * moveDescription = moveList[moveIndex].description;
-			NokiaLCD_Clear();
-			NokiaLCD_WriteString(moveName);
-			NokiaLCD_SetLine(3, 0);
-			NokiaLCD_WriteString(moveDescription);
-			break;
-		}
-		case SCENE_Battle_MoveUsedText:
-		case SCENE_Battle_MoveMissText:
-		case SCENE_Battle_MoveHitText:
-		case SCENE_Battle_MoveEffectText:
-			// TODO: show animations?
-			break;
-		case SCENE_PokemonMenu:
-			// TODO
-			break;
-		case SCENE_Settings:
-			switch (menuIndex) {
-				case MI_TopLeft:
-				case MI_TopRight:
-					NokiaLCD_SetLine(5, 1);
-					switch(gameDifficulty) {
-						case 1: str = "1"; break;
-						case 2: str = "2"; break;
-						case 3: str = "3"; break;
-					}
-					NokiaLCD_WriteString("Difficulty:  ");
-					NokiaLCD_WriteString(str);
-					if (gameSound)
-						NokiaLCD_WriteString("Sound:      ON");
-					else
-						NokiaLCD_WriteString("Sound:     OFF");
-					break;
-				default:
-					break;
-			}
-			break;
-		default:
-			NokiaLCD_WriteString("ERROR: sceneIndex");
-	}
-}
 
-void setMenu(uint8_t state, uint8_t isMessage) {
+
+void drawLCD(uint8_t state, uint8_t isMessage) {
 	LCD_ClearScreen();
 	switch (state) {
 		case SCENE_MainMenu:
@@ -282,8 +210,8 @@ void setMenu(uint8_t state, uint8_t isMessage) {
 		case SCENE_Battle_MoveUsedText:
 		{
 			char* pokemonName = player.pokemon[player.activeIndex].name;
-			uint8_t moveIndex = player.pokemon[player.activeIndex].moveIds[menuIndex];
-			char* moveName = moveList[moveIndex].name;
+			//uint8_t moveIndex = player.pokemon[player.activeIndex].moveIds[menuIndex];
+			char* moveName = moveResult.moveName;//moveList[moveResult.moveIndex].name;
 			uint8_t cursor = 1;
 			LCD_DisplayString(cursor, pokemonName);
 			cursor += strlen(pokemonName);
@@ -303,9 +231,11 @@ void setMenu(uint8_t state, uint8_t isMessage) {
 			if (moveResult.isCritical) {
 				LCD_DisplayString(1, "A critical hit!");
 			} else if (moveResult.effectiveness == TE_STRONG) {
-				LCD_DisplayString(1, "It is super effective!");
+				LCD_DisplayString(1, "It is super");
+				LCD_DisplayString(17, "effective!");
 			} else if (moveResult.effectiveness == TE_WEAK) {
-				LCD_DisplayString(1, "Not very effective...");
+				LCD_DisplayString(1, "Not very"); 
+				LCD_DisplayString(17, "effective...");
 			}
 			break;
 		case SCENE_Battle_MoveEffectText:
@@ -373,7 +303,85 @@ void drawPokemonUI(Trainer* trainer, uint8_t isPlayer) {
 	else NokiaLCD_HealthBar(12, 10, health, healthMax);
 }
 
-void setScene(uint8_t index) {
+void drawNokiaLCD_Update() {
+	char* str;
+	switch (sceneIndex) {
+		case SCENE_Start:
+			break;
+		case SCENE_MainMenu:
+			switch (menuIndex) {
+				case MI_TopLeft:
+					NokiaLCD_SetLine(4, 1);
+					NokiaLCD_WriteString("Find Pokemon  in the tall   grass! ");
+					break;
+				case MI_TopRight:
+					NokiaLCD_SetLine(4, 1);
+					NokiaLCD_WriteString("Battle other  trainers!            ");
+					break;
+				case MI_BotLeft:
+					NokiaLCD_SetLine(4, 1);
+					NokiaLCD_WriteString("View your     Pokemon!             ");
+					break;
+				case MI_BotRight:
+					NokiaLCD_SetLine(4, 1);
+					NokiaLCD_WriteString("Set difficultyand other     things!");
+					break;
+				default:
+					NokiaLCD_WriteString("ERROR: menuIndex");
+			}
+			break;
+		case SCENE_Battle_Intro:
+			// no menu items, so do nothing
+			break;
+		case SCENE_Battle_Menu:
+			// screen displays pokemon, so it can't show menu items info
+			break;
+		case SCENE_Battle_MoveMenu:
+			{
+				uint8_t moveIndex = player.pokemon[player.activeIndex].moveIds[menuIndex];
+				char * moveName = moveList[moveIndex].name;
+				char * moveDescription = moveList[moveIndex].description;
+				NokiaLCD_Clear();
+				NokiaLCD_WriteString(moveName);
+				NokiaLCD_SetLine(3, 0);
+				NokiaLCD_WriteString(moveDescription);
+				break;
+			}
+		case SCENE_Battle_MoveUsedText:
+		case SCENE_Battle_MoveMissText:
+		case SCENE_Battle_MoveHitText:
+		case SCENE_Battle_MoveEffectText:
+			// no menu items, do nothing
+			break;
+		case SCENE_PokemonMenu:
+			// TODO: Show each menu items info		<<<<<<<<<<<<<<<<<<
+			break;
+		case SCENE_Settings:
+			switch (menuIndex) {
+				case MI_TopLeft:
+				case MI_TopRight:
+					NokiaLCD_SetLine(5, 1);
+					switch(gameDifficulty) {
+						case 1: str = "1"; break;
+						case 2: str = "2"; break;
+						case 3: str = "3"; break;
+					}
+					NokiaLCD_WriteString("Difficulty:  ");
+					NokiaLCD_WriteString(str);
+					if (gameSound) NokiaLCD_WriteString("Sound:      ON");
+					else NokiaLCD_WriteString("Sound:     OFF");
+					break;
+				default:
+					LCD_DisplayString(17, "ERROR: menuIndex");
+					break;
+			}
+			break;
+		default:
+			NokiaLCD_WriteString("ERROR: sceneIndex");
+	}
+}
+
+void drawNokiaLCD(uint8_t index) {
 	sceneIndex = index;
 	NokiaLCD_Clear();
 	switch (index) {
@@ -403,7 +411,7 @@ void setScene(uint8_t index) {
 		default:
 			break;
 	}
-	hoverMenuItem();
+	drawNokiaLCD_Update();
 }
 
 int Scene_Tick(int state) {
@@ -420,8 +428,8 @@ int Scene_Tick(int state) {
 			player.favoriteIndex = 0;
 			
 			state = SCENE_MainMenu;
-			setMenu(state, 0);
-			setScene(state);
+			drawLCD(state, 0);
+			drawNokiaLCD(state);
 			break;
 		case SCENE_MainMenu:
 			if (pressedB) {
@@ -429,25 +437,25 @@ int Scene_Tick(int state) {
 				switch(menuIndex) {
 					case MI_TopLeft:
 						state = SCENE_Battle_Intro;
-						setMenu(state, 1);
-						setScene(state);
+						drawLCD(state, 1);
+						drawNokiaLCD(state);
 						textDisplayTimer = TIME_3SEC;
 						break;
 					case MI_TopRight:
 						state = SCENE_Battle_Intro;
-						setMenu(state, 1);
-						setScene(state);
+						drawLCD(state, 1);
+						drawNokiaLCD(state);
 						textDisplayTimer = TIME_3SEC;
 						break;
 					case MI_BotLeft:
 						state = SCENE_PokemonMenu;
-						setMenu(state, 0);
-						setScene(state);
+						drawLCD(state, 0);
+						drawNokiaLCD(state);
 						break;
 					case MI_BotRight:
 						state = SCENE_Settings;
-						setMenu(state, 0);
-						setScene(state);
+						drawLCD(state, 0);
+						drawNokiaLCD(state);
 						break;
 				}
 			} else {
@@ -462,8 +470,8 @@ int Scene_Tick(int state) {
 				enemy.favoriteIndex = 0;
 				
 				state = SCENE_Battle_Menu;
-				setMenu(state, 0);
-				setScene(state);
+				drawLCD(state, 0);
+				drawNokiaLCD(state);
 			} else {
 				state = SCENE_Battle_Intro;
 			}
@@ -474,8 +482,8 @@ int Scene_Tick(int state) {
 				switch(menuIndex) {
 					case MI_TopLeft:
 						state = SCENE_Battle_MoveMenu;
-						setMenu(state, 0);
-						setScene(state);
+						drawLCD(state, 0);
+						drawNokiaLCD(state);
 						break;
 					case MI_TopRight: // Pokedex
 						// TODO: Pokedex
@@ -485,15 +493,15 @@ int Scene_Tick(int state) {
 						break;
 					case MI_BotRight: // Escape
 						state = SCENE_MainMenu;
-						setMenu(state, 0);
-						setScene(state);
+						drawLCD(state, 0);
+						drawNokiaLCD(state);
 						break;
 				}
 			} else if (pressedX) {
 				pressedX = 0;
 				state = SCENE_MainMenu;
-				setMenu(state, 0);
-				setScene(state);
+				drawLCD(state, 0);
+				drawNokiaLCD(state);
 			} else {
 				state = SCENE_Battle_Menu;
 			}
@@ -501,19 +509,19 @@ int Scene_Tick(int state) {
 		case SCENE_Battle_MoveMenu:
 			if (pressedB) {
 				pressedB = 0;
-				state = SCENE_Battle_MoveUsedText;
-				setMenu(state, 1);
-				setScene(state);
-				textDisplayTimer = TIME_3SEC;
-				//
+				// A move was selected
 				uint8_t moveIndex = player.pokemon[player.activeIndex].moveIds[menuIndex];
 				generateMoveResult(moveIndex, &player, &enemy);
-				//
+				
+				state = SCENE_Battle_MoveUsedText;
+				drawLCD(state, 1);
+				drawNokiaLCD(state);
+				textDisplayTimer = TIME_3SEC;
 			} else if (pressedX) {
 				pressedX = 0;
 				state = SCENE_Battle_Menu;
-				setMenu(state, 0);
-				setScene(state);
+				drawLCD(state, 0);
+				drawNokiaLCD(state);
 			}
 			break;
 		case SCENE_Battle_MoveUsedText:
@@ -521,14 +529,24 @@ int Scene_Tick(int state) {
 				//state = (moveResult.isHit) ? SCENE_Battle_MoveHitText : SCENE_Battle_MoveMissText;
 				if (!moveResult.isHit) {
 					state = SCENE_Battle_MoveMissText;
+					drawLCD(state, 1);
+					drawNokiaLCD(state);
+					textDisplayTimer = TIME_3SEC;
 				} else if (moveResult.isCritical || moveResult.effectiveness != TE_NORMAL) {
 					state = SCENE_Battle_MoveHitText;
+					drawLCD(state, 1);
+					drawNokiaLCD(state);
+					textDisplayTimer = TIME_3SEC;
 				} else if (moveResult.isEffectHit) {
 					state = SCENE_Battle_MoveEffectText;
+					drawLCD(state, 1);
+					drawNokiaLCD(state);
+					textDisplayTimer = TIME_3SEC;
+				} else {
+					state = SCENE_Battle_Menu;
+					drawLCD(state, 0);
+					drawNokiaLCD(state);
 				}
-				setMenu(state, 1);
-				setScene(state);
-				textDisplayTimer = TIME_3SEC;
 			} else {
 				state = SCENE_Battle_MoveUsedText;
 			}
@@ -536,8 +554,8 @@ int Scene_Tick(int state) {
 		case SCENE_Battle_MoveMissText:
 			if (textDisplayTimer < 0) {
 				state = SCENE_Battle_Menu;
-				setMenu(state, 0);
-				setScene(state);
+				drawLCD(state, 0);
+				drawNokiaLCD(state);
 			} else {
 				state = SCENE_Battle_MoveMissText;
 			}
@@ -546,13 +564,13 @@ int Scene_Tick(int state) {
 			if (textDisplayTimer < 0) {
 				if (moveResult.isEffectHit) {
 					state = SCENE_Battle_MoveEffectText;
-					setMenu(state, 1);
-					setScene(state);
+					drawLCD(state, 1);
+					drawNokiaLCD(state);
 					textDisplayTimer = TIME_3SEC;
 				} else {
 					state = SCENE_Battle_Menu;
-					setMenu(state, 0);
-					setScene(state);
+					drawLCD(state, 0);
+					drawNokiaLCD(state);
 				}
 			} else {
 				state = SCENE_Battle_MoveHitText;
@@ -561,8 +579,8 @@ int Scene_Tick(int state) {
 		case SCENE_Battle_MoveEffectText:
 			if (textDisplayTimer < 0) {
 				state = SCENE_Battle_Menu;
-				setMenu(state, 0);
-				setScene(state);
+				drawLCD(state, 0);
+				drawNokiaLCD(state);
 			} else {
 				state = SCENE_Battle_MoveEffectText;
 			}
@@ -583,8 +601,8 @@ int Scene_Tick(int state) {
 			} else if (pressedX) {
 				pressedX = 0;
 				state = SCENE_MainMenu;
-				setMenu(state, 0);
-				setScene(state);
+				drawLCD(state, 0);
+				drawNokiaLCD(state);
 			}
 			break;
 		case SCENE_Settings:
@@ -594,11 +612,11 @@ int Scene_Tick(int state) {
 					case MI_TopLeft:
 						gameDifficulty++;
 						if (gameDifficulty > 3) gameDifficulty = 1;
-						hoverMenuItem();
+						drawNokiaLCD_Update();
 						break;
 					case MI_TopRight:
 						gameSound = (gameSound) ? 0 : 1;
-						hoverMenuItem();
+						drawNokiaLCD_Update();
 						break;
 					default:
 						break;
@@ -606,8 +624,8 @@ int Scene_Tick(int state) {
 			} else if (pressedX) {
 				pressedX = 0;
 				state = SCENE_MainMenu;
-				setMenu(state, 0);
-				setScene(state);
+				drawLCD(state, 0);
+				drawNokiaLCD(state);
 			}
 			break;
 		default:
@@ -679,7 +697,7 @@ int SNES_LEFT_Tick(int state) {
 			if (SNES_LEFT && textDisplayTimer <= 0) {
 				state = SNES_LEFT_Pressed;
 				setMenuIndex(menuIndex-1);				
-				hoverMenuItem();
+				drawNokiaLCD_Update();
 			} else {
 				state = SNES_LEFT_Released;
 			}
@@ -698,7 +716,7 @@ int SNES_RIGHT_Tick(int state) {
 			if (SNES_RIGHT && textDisplayTimer <= 0) {
 				state = SNES_RIGHT_Pressed;
 				setMenuIndex(menuIndex+1);
-				hoverMenuItem();
+				drawNokiaLCD_Update();
 			} else {
 				state = SNES_RIGHT_Released;
 			}
