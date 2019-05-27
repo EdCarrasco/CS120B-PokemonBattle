@@ -37,13 +37,7 @@ Pokemon Pokemon_Bulbasaur() {
 	pokemon.effectTime = 0;
 	pokemon.attack = ATTACK_NORMAL;
 	pokemon.defense = DEFENSE_NORMAL;
-	pokemon.agility = SPEED_NORMAL;
-	
-	pokemon.moves[0] = Move_Tackle();
-	pokemon.moves[1] = Move_Ember();
-	pokemon.moves[2] = Move_Bubble();
-	pokemon.moves[3] = Move_VineWhip();
-	
+	pokemon.agility = SPEED_NORMAL;	
 	pokemon.moveIds[0] = ID_TACKLE;
 	pokemon.moveIds[1] = ID_VINEWHIP;
 	pokemon.moveIds[2] = ID_BUBBLE;
@@ -68,12 +62,6 @@ Pokemon Pokemon_Squirtle() {
 	pokemon.attack = ATTACK_NORMAL;
 	pokemon.defense = DEFENSE_NORMAL;
 	pokemon.agility = SPEED_NORMAL;
-	
-	pokemon.moves[0] = Move_Tackle();
-	pokemon.moves[1] = Move_Ember();
-	pokemon.moves[2] = Move_Bubble();
-	pokemon.moves[3] = Move_VineWhip();
-	
 	pokemon.moveIds[0] = ID_TACKLE;
 	pokemon.moveIds[1] = ID_VINEWHIP;
 	pokemon.moveIds[2] = ID_BUBBLE;
@@ -96,13 +84,7 @@ Pokemon Pokemon_Charmander() {
 	pokemon.effectTime = 0;
 	pokemon.attack = ATTACK_NORMAL;
 	pokemon.defense = DEFENSE_NORMAL;
-	pokemon.agility = SPEED_NORMAL;
-	
-	pokemon.moves[0] = Move_Tackle();
-	pokemon.moves[1] = Move_Ember();
-	pokemon.moves[2] = Move_Bubble();
-	pokemon.moves[3] = Move_VineWhip();
-	
+	pokemon.agility = SPEED_NORMAL;	
 	pokemon.moveIds[0] = ID_TACKLE;
 	pokemon.moveIds[1] = ID_VINEWHIP;
 	pokemon.moveIds[2] = ID_BUBBLE;

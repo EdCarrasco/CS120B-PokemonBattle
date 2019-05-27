@@ -13,6 +13,11 @@
 #include <string.h>
 #include <assert.h>
 
+double map_range(double value, double input_low, double input_high, double output_low, double output_high) {
+	// Y = (X-A)/(B-A) * (D-C) + C
+	return (value - input_low) / (input_high - input_low) * (output_high - output_low) + output_low;
+}
+
 #include "bit.h"
 #include "lcd.h"
 #include "nokia5110.h"
@@ -98,6 +103,16 @@ int main(void)
 	tasks[i].period = SNES_Button_Period;
 	tasks[i].elapsedTime = tasks[i].period;
 	tasks[i].TickFunction = &SNES_X_Tick;
+	i++;
+	tasks[i].state = SNES_L_Released;
+	tasks[i].period = SNES_Button_Period;
+	tasks[i].elapsedTime = tasks[i].period;
+	tasks[i].TickFunction = &SNES_L_Tick;
+	i++;
+	tasks[i].state = SNES_R_Released;
+	tasks[i].period = SNES_Button_Period;
+	tasks[i].elapsedTime = tasks[i].period;
+	tasks[i].TickFunction = &SNES_R_Tick;
 	i++;
 	tasks[i].state = SCENE_Start;
 	tasks[i].period = scenePeriod;

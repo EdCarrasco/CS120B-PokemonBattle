@@ -26,7 +26,6 @@ typedef struct _Pokemon {
 	uint8_t attack;
 	uint8_t defense;
 	uint8_t agility;
-	Move moves[4];
 	uint8_t moveIds[4];
 } Pokemon;
 
