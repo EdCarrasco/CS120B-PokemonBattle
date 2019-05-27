@@ -70,9 +70,6 @@ int main(void)
 	//setScene(SCENE_MAIN_MENU);
 	//LCD_Cursor(1);
 	
-	
-	
-	
 	/*LCD_DisplayMenu4("Catch", "Gym", "Pokemon", "Setting");
 	menuLength = 4;
 	setMenuIndex(0);

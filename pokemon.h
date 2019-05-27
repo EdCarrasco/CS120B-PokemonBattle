@@ -26,11 +26,8 @@ typedef struct _Pokemon {
 	uint8_t attack;
 	uint8_t defense;
 	uint8_t agility;
-	Move move1;
-	Move move2;
-	Move move3;
-	Move move4;
 	Move moves[4];
+	uint8_t moveIds[4];
 } Pokemon;
 
 enum POKEMON_IDS {ID_BULBASAUR, ID_SQUIRTLE, ID_CHARMANDER};

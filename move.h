@@ -11,6 +11,8 @@
 #include <stdint.h>
 #include "definitions.h"
 
+enum MOVE_IDS {ID_TACKLE, ID_VINEWHIP, ID_BUBBLE, ID_EMBER};
+
 typedef struct _Move {
     char* name;
 	char* description;
