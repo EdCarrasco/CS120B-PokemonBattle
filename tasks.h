@@ -43,7 +43,8 @@ enum SNES_R_States {SNES_R_Released, SNES_R_Pressed} SNES_R_State;
 
 enum Scene_States {SCENE_Start, SCENE_MainMenu, SCENE_PokemonMenu, SCENE_Settings,
 	SCENE_Battle_Intro, SCENE_Battle_Menu, SCENE_Battle_MoveMenu, SCENE_Battle_MoveUsedText, 
-	SCENE_Battle_MoveMissText, SCENE_Battle_MoveHitText, SCENE_Battle_MoveEffectText
+	SCENE_Battle_MoveMissText, SCENE_Battle_MoveHitText, SCENE_Battle_MoveEffectText,
+	SCENE_Battle_EnemyPokemonDead
 } sceneState;
 enum MENU_ITEMS {MI_TopLeft, MI_TopRight, MI_BotLeft, MI_BotRight};
 
@@ -63,10 +64,11 @@ uint8_t gameDifficulty = 1;
 uint8_t gameSound = 0;
 
 typedef struct _Trainer {
-	Pokemon pokemon[6];
+	Pokemon* pokemon[6];
 	uint8_t _size;			// size of pokemon array
 	uint8_t activeIndex;	// index of currently active pokemon
 	uint8_t favoriteIndex;	// index of pokemon that goes first in battle
+	uint8_t isPlayer;
 } Trainer;
 
 Trainer player, enemy;
@@ -124,11 +126,17 @@ typedef struct _MoveResult {
 	int8_t damage;
 	uint8_t isEffectHit;
 	uint8_t effect;
+	Trainer* attacker;
+	Trainer* defender;
+	uint8_t isPlayerPokemonDead;
+	uint8_t isEnemyPokemonDead;
 } MoveResult;
 
 MoveResult moveResult;
 
 void generateMoveResult(uint8_t moveIndex, Trainer *attacker, Trainer *defender) {
+	moveResult.attacker = attacker;
+	moveResult.defender = defender;
 	moveResult.moveIndex = moveIndex;
 	moveResult.moveName = moveList[moveIndex].name;
 	// Calculate if move hits
@@ -142,7 +150,7 @@ void generateMoveResult(uint8_t moveIndex, Trainer *attacker, Trainer *defender)
 	double multiplier = 1;
 	multiplier += (moveResult.isCritical) ? 0.5 : 1;
 	uint8_t moveType = moveList[moveIndex].type;
-	uint8_t targetType = (*defender).pokemon[(*defender).activeIndex].type;
+	uint8_t targetType = (*defender).pokemon[(*defender).activeIndex]->type;
 	moveResult.effectiveness = getEffectiveness(moveType, targetType);
 	switch (moveResult.effectiveness) {
 		case TE_STRONG: multiplier += 0.5; break;
@@ -152,13 +160,43 @@ void generateMoveResult(uint8_t moveIndex, Trainer *attacker, Trainer *defender)
 	
 	// Calculate damage additives (attack bonus, defense bonus)
 	double damage = moveList[moveIndex].baseDamage;
-	uint8_t attack = (*attacker).pokemon[(*attacker).activeIndex].attack;
-	uint8_t defense = (*defender).pokemon[(*defender).activeIndex].defense;
+	uint8_t attack = (*attacker).pokemon[(*attacker).activeIndex]->attack;
+	uint8_t defense = (*defender).pokemon[(*defender).activeIndex]->defense;
 	moveResult.damage = (int8_t)(damage * multiplier) + attack - defense;
 	if (moveResult.damage < 1) moveResult.damage = 1;
 	
-	LCD_Cursor(28);
-	LCD_WriteData(moveIndex+'0');
+	if (moveResult.isHit) {
+		// Change health
+		int8_t health = moveResult.defender->pokemon[moveResult.defender->activeIndex]->health;
+		health -= moveResult.damage;
+		if (health <= 0) {
+			health = 0;
+			moveResult.defender->pokemon[moveResult.defender->activeIndex]->isKnockedOut = 1;
+		}
+		moveResult.defender->pokemon[moveResult.defender->activeIndex]->health = health;
+		
+		// Effect
+		switch(moveResult.effect) {
+			case E_ENEMY_BURN:
+			case E_ENEMY_ATTACK_LOW:
+			case E_ENEMY_DEFENSE_LOW:
+			case E_ENEMY_SPEED_LOW:
+			case E_ENEMY_ACCURACY_LOW:
+				moveResult.defender->pokemon[moveResult.defender->activeIndex]->effect = moveResult.effect;
+				break;
+			case E_SELF_ATTACK_HIGH:
+			case E_SELF_DEFENSE_HIGH:
+			case E_SELF_SPEED_HIGH:
+			case E_SELF_ACCURACY_HIGH:
+				moveResult.attacker->pokemon[moveResult.defender->activeIndex]->effect = moveResult.effect;
+				break;
+			case E_NONE:
+				// do nothing
+				break;
+		}
+	} else {
+		// TODO: effects that still work if attack missed?
+	}
 }
 
 void clearMenuSelector() {
@@ -199,17 +237,17 @@ void drawLCD(uint8_t state, uint8_t isMessage) {
 			break;
 		case SCENE_Battle_MoveMenu:
 		{
-			uint8_t m0 = player.pokemon[player.activeIndex].moveIds[0];
-			uint8_t m1 = player.pokemon[player.activeIndex].moveIds[1];
-			uint8_t m2 = player.pokemon[player.activeIndex].moveIds[2];
-			uint8_t m3 = player.pokemon[player.activeIndex].moveIds[3];
+			uint8_t m0 = player.pokemon[player.activeIndex]->moveIds[0];
+			uint8_t m1 = player.pokemon[player.activeIndex]->moveIds[1];
+			uint8_t m2 = player.pokemon[player.activeIndex]->moveIds[2];
+			uint8_t m3 = player.pokemon[player.activeIndex]->moveIds[3];
 			LCD_DisplayMenu4(moveList[m0].name, moveList[m1].name, moveList[m2].name, moveList[m3].name);
 			menuLength = 4;
 			break;
 		}
 		case SCENE_Battle_MoveUsedText:
 		{
-			char* pokemonName = player.pokemon[player.activeIndex].name;
+			char* pokemonName = player.pokemon[player.activeIndex]->name;
 			//uint8_t moveIndex = player.pokemon[player.activeIndex].moveIds[menuIndex];
 			char* moveName = moveResult.moveName;//moveList[moveResult.moveIndex].name;
 			uint8_t cursor = 1;
@@ -257,24 +295,6 @@ void drawLCD(uint8_t state, uint8_t isMessage) {
 	}
 }
 
-/*
-void drawEnemyPokemonSprite() {
-	uint8_t enemy_xoffset = 84-1-25;
-	uint8_t enemy_yoffset = 0;
-	NokiaLCD_CustomBitmap(bitmaps[enemy.pokemon[enemy.activeIndex].spriteFrontIndex], enemy_xoffset, enemy_yoffset, 0);
-}
-
-void drawEnemyPokemonUI() {
-	NokiaLCD_SetCursor(0,0);
-	NokiaLCD_WriteString(enemy.pokemon[enemy.activeIndex].name);
-	NokiaLCD_SetCursor(0,8);
-	NokiaLCD_WriteString("HP");
-	uint8_t enemy_hp_percentage = (uint8_t)(map_range(enemy.pokemon[enemy.activeIndex].health, 0, enemy.pokemon[enemy.activeIndex].healthMax, 0, 100));
-	NokiaLCD_HealthBar(12, 10, enemy_hp_percentage);
-}
-*/
-
-
 void drawPokemonSprite(Trainer *trainer, uint8_t isPlayer) {
 	uint8_t xoffset, yoffset;
 	if (isPlayer) {
@@ -284,27 +304,26 @@ void drawPokemonSprite(Trainer *trainer, uint8_t isPlayer) {
 		xoffset = 84-1-24;
 		yoffset = 0;
 	}
-	NokiaLCD_CustomBitmap(bitmaps[(*trainer).pokemon[(*trainer).activeIndex].spriteFrontIndex], xoffset, yoffset, isPlayer);
+	NokiaLCD_CustomBitmap(bitmaps[(*trainer).pokemon[(*trainer).activeIndex]->spriteFrontIndex], xoffset, yoffset, isPlayer);
 }
 
 void drawPokemonUI(Trainer* trainer, uint8_t isPlayer) {
 	uint8_t index = (*trainer).activeIndex;
 	if (isPlayer) NokiaLCD_SetCursor(31, 8*4);
 	else NokiaLCD_SetCursor(0, 0);
-	NokiaLCD_WriteString((*trainer).pokemon[index].name);
+	NokiaLCD_WriteString((*trainer).pokemon[index]->name);
 	
 	if (isPlayer) NokiaLCD_SetCursor(24+49, 8*5);
 	else NokiaLCD_SetCursor(0, 8);
 	NokiaLCD_WriteString("HP");
 	
-	uint8_t health = (*trainer).pokemon[index].health;
-	uint8_t healthMax = (*trainer).pokemon[index].healthMax;
+	uint8_t health = (*trainer).pokemon[index]->health;
+	uint8_t healthMax = (*trainer).pokemon[index]->healthMax;
 	if (isPlayer) NokiaLCD_HealthBar(31, 42, health, healthMax);
 	else NokiaLCD_HealthBar(12, 10, health, healthMax);
 }
 
 void drawNokiaLCD_Update() {
-	char* str;
 	switch (sceneIndex) {
 		case SCENE_Start:
 			break;
@@ -338,7 +357,7 @@ void drawNokiaLCD_Update() {
 			break;
 		case SCENE_Battle_MoveMenu:
 			{
-				uint8_t moveIndex = player.pokemon[player.activeIndex].moveIds[menuIndex];
+				uint8_t moveIndex = player.pokemon[player.activeIndex]->moveIds[menuIndex];
 				char * moveName = moveList[moveIndex].name;
 				char * moveDescription = moveList[moveIndex].description;
 				NokiaLCD_Clear();
@@ -360,17 +379,21 @@ void drawNokiaLCD_Update() {
 			switch (menuIndex) {
 				case MI_TopLeft:
 				case MI_TopRight:
+				{
+					char* str;
 					NokiaLCD_SetLine(5, 1);
 					switch(gameDifficulty) {
 						case 1: str = "1"; break;
 						case 2: str = "2"; break;
 						case 3: str = "3"; break;
+						default: str = "e";
 					}
 					NokiaLCD_WriteString("Difficulty:  ");
 					NokiaLCD_WriteString(str);
 					if (gameSound) NokiaLCD_WriteString("Sound:      ON");
 					else NokiaLCD_WriteString("Sound:     OFF");
 					break;
+				}
 				default:
 					LCD_DisplayString(17, "ERROR: menuIndex");
 					break;
@@ -426,6 +449,7 @@ int Scene_Tick(int state) {
 			player.pokemon[player._size++] = new_Pokemon(ID_BULBASAUR);
 			player.activeIndex = 0;
 			player.favoriteIndex = 0;
+			player.isPlayer = 1;
 			
 			state = SCENE_MainMenu;
 			drawLCD(state, 0);
@@ -464,10 +488,12 @@ int Scene_Tick(int state) {
 			break;
 		case SCENE_Battle_Intro:
 			if (textDisplayTimer < 0) {
+				// TODO: Create a function to generate different trainers
 				enemy._size = 0;
 				enemy.pokemon[enemy._size++] = new_Pokemon(ID_CHARMANDER);
 				enemy.activeIndex = 0;
 				enemy.favoriteIndex = 0;
+				enemy.isPlayer = 0;
 				
 				state = SCENE_Battle_Menu;
 				drawLCD(state, 0);
@@ -510,7 +536,7 @@ int Scene_Tick(int state) {
 			if (pressedB) {
 				pressedB = 0;
 				// A move was selected
-				uint8_t moveIndex = player.pokemon[player.activeIndex].moveIds[menuIndex];
+				uint8_t moveIndex = player.pokemon[player.activeIndex]->moveIds[menuIndex];
 				generateMoveResult(moveIndex, &player, &enemy);
 				
 				state = SCENE_Battle_MoveUsedText;
@@ -584,6 +610,9 @@ int Scene_Tick(int state) {
 			} else {
 				state = SCENE_Battle_MoveEffectText;
 			}
+			break;
+		case SCENE_Battle_EnemyPokemonDead:
+			
 			break;
 		case SCENE_PokemonMenu:
 			if (pressedB) {
@@ -733,7 +762,7 @@ int SNES_L_Tick(int state) {
 		case SNES_L_Released:
 		if (SNES_L && textDisplayTimer <= 0) {
 			state = SNES_L_Pressed;
-			if (enemy.pokemon[enemy.activeIndex].health > 25) enemy.pokemon[enemy.activeIndex].health -= 25;
+			if (enemy.pokemon[enemy.activeIndex]->health > 25) enemy.pokemon[enemy.activeIndex]->health -= 25;
 			} else {
 			state = SNES_L_Released;
 		}
@@ -750,7 +779,7 @@ int SNES_R_Tick(int state) {
 		case SNES_R_Released:
 		if (SNES_R && textDisplayTimer <= 0) {
 			state = SNES_R_Pressed;
-			if (enemy.pokemon[enemy.activeIndex].health < 75) enemy.pokemon[enemy.activeIndex].health += 25;
+			if (enemy.pokemon[enemy.activeIndex]->health < 75) enemy.pokemon[enemy.activeIndex]->health += 25;
 			} else {
 			state = SNES_R_Released;
 		}

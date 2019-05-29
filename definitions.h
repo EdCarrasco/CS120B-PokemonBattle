@@ -72,10 +72,10 @@
 #define CRIT_HIGH		15
 #define CRIT_VERYHIGH	20
 
-#define EFF_LOW			20
-#define EFF_NORMAL		50
-#define EFF_HIGH		80
-#define EFF_ALWAYS		100
+#define EFF_HIT_LOW			20
+#define EFF_HIT_NORMAL		50
+#define EFF_HIT_HIGH		80
+#define EFF_HIT_ALWAYS		100
 
 enum Pokemon_Types {
     T_NORMAL,

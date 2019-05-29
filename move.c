@@ -43,7 +43,7 @@ Move Move_Bubble() {
 	move.effect = E_ENEMY_SPEED_LOW;
 	move.hitChance = HIT_ALWAYS;
 	move.criticalChance = CRIT_NORMAL;
-	move.effectChance = EFF_NORMAL;
+	move.effectChance = EFF_HIT_NORMAL;
 	return move;
 }
 
@@ -56,6 +56,6 @@ Move Move_Ember() {
 	move.effect = E_ENEMY_BURN;
 	move.hitChance = HIT_HIGH;
 	move.criticalChance = CRIT_NORMAL;
-	move.effectChance = EFF_NORMAL;
+	move.effectChance = EFF_HIT_NORMAL;
 	return move;
 }
