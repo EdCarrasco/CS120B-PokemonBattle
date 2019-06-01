@@ -42,6 +42,6 @@ void NokiaLCD_SetLine(uint8_t line, uint8_t clearLine);
 void NokiaLCD_Render(void);
 
 void NokiaLCD_CustomBitmap(const uint8_t array[20][3], uint8_t xoffset, uint8_t yoffset, uint8_t direction);
-void NokiaLCD_HealthBar(uint8_t xoffset, uint8_t yoffset, uint8_t health, uint8_t healthMax);
+void NokiaLCD_HealthBar(uint8_t xoffset, uint8_t yoffset, uint8_t health, uint8_t healthMax, uint8_t healthLost);
 
 #endif /* NOKIA5110_H_ */

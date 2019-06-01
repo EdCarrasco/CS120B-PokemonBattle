@@ -91,17 +91,17 @@ void LCD_WriteCustomString(unsigned char column, unsigned char **data_2Darray) {
 
 void LCD_DisplayMenu4(char *item1, char *item2, char *item3, char *item4) {
 	LCD_Cursor(1);
-	LCD_DisplayString(1, item1);
-	LCD_DisplayString(9, item2);
-	LCD_DisplayString(17, item3);
-	LCD_DisplayString(25, item4);
+	LCD_DisplayString(1+1, item1);
+	LCD_DisplayString(9+1, item2);
+	LCD_DisplayString(17+1, item3);
+	LCD_DisplayString(25+1, item4);
 }
 
 void LCD_DisplayMenu2(char *item1, char *item2) {
 	LCD_ClearScreen();
 	LCD_Cursor(1);
-	LCD_DisplayString(1, item1);
-	LCD_DisplayString(9, item2);
+	LCD_DisplayString(1+1, item1);
+	LCD_DisplayString(9+1, item2);
 }
 
 void delay_ms(int miliSec) //for 8 Mhz crystal

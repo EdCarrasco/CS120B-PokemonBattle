@@ -19,6 +19,7 @@ typedef struct _Pokemon {
 	uint8_t level;
 	int8_t health;
 	int8_t healthMax;
+	int8_t healthLost;
 	uint8_t status;
 	uint8_t statusTime;
 	uint8_t effect;
@@ -32,9 +33,9 @@ typedef struct _Pokemon {
 
 enum POKEMON_IDS {ID_BULBASAUR, ID_SQUIRTLE, ID_CHARMANDER};
 	
-Pokemon* new_Pokemon(uint8_t pokemonId);
-Pokemon* Pokemon_Bulbasaur();
-Pokemon* Pokemon_Squirtle();
-Pokemon* Pokemon_Charmander();
+Pokemon new_Pokemon(uint8_t pokemonId);
+Pokemon Pokemon_Bulbasaur();
+Pokemon Pokemon_Squirtle();
+Pokemon Pokemon_Charmander();
 
 #endif /* POKEMON_H_ */

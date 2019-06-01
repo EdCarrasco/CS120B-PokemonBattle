@@ -179,25 +179,26 @@ void NokiaLCD_CustomBitmap(const uint8_t bitmap[20][3], uint8_t xoffset, uint8_t
 	}
 }
 
-void NokiaLCD_HealthBar(uint8_t xoffset, uint8_t yoffset, uint8_t health, uint8_t healthMax) {
-	uint8_t width = 40;
-	uint8_t height = 5;
+void NokiaLCD_HealthBar(uint8_t xoffset, uint8_t yoffset, uint8_t health, uint8_t healthMax, uint8_t healthLost) {
+	uint8_t barWidth = 40;
+	uint8_t barHeight = 5;
 	//uint8_t fill = 20;//(uint8_t) map_range(percentage, 0.0, 1.0, 0.0, (double)(width-1));
-	uint8_t fill = (uint8_t)(((double) health / (double)healthMax) * (double)(width));
+	uint8_t healthWidth = (uint8_t)(((double) health / (double)healthMax) * (double)(barWidth));
+	uint8_t healthLostWidth = (uint8_t)( (double)healthLost / (double)healthMax * (double)barWidth );
 	uint8_t row, col;
-	for (row = 0; row < height; row++) {
-		for (col = 0; col < width; col++) {
-			//uint8_t value = (row == 0 || row == height-1 || col >= 0 && col <= fill || col == width-1) ? 1 : 0;
-    		if (row == 0 || row == height-1) {
+	for (row = 0; row < barHeight; row++) {
+		for (col = 0; col < barWidth; col++) {
+    		if (row == 0 || row == barHeight-1) {
 				NokiaLCD_SetPixel(xoffset+col, yoffset+row, 1);
 			} else {
-				if ((col >= 0 && col <= fill) || (col == width-1)) {
+				if ((col >= 0 && col <= healthWidth) || (col == barWidth-1)) {
+					NokiaLCD_SetPixel(xoffset+col, yoffset+row, 1);
+				} else if (col <= healthWidth + healthLostWidth && ((row%2==0 && col%2==0) || (row%2==1 && col%2==1))) {
 					NokiaLCD_SetPixel(xoffset+col, yoffset+row, 1);
 				} else {
 					NokiaLCD_SetPixel(xoffset+col, yoffset+row, 0);
 				}
 			}
-			//NokiaLCD_SetPixel(xoffset+col, yoffset+col, value);
 		}
 	}
 }

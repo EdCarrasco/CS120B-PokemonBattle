@@ -26,7 +26,7 @@ Move Move_VineWhip() {
 	move.name = STR_VINEWHIP;
 	move.description = "Deals high    GRASS damage.";
 	move.type = T_GRASS;
-	move.baseDamage = DAMAGE_NORMAL;
+	move.baseDamage = DAMAGE_VERYHIGH;
 	move.effect = E_NONE;
 	move.hitChance = HIT_NORMAL;
 	move.criticalChance = CRIT_NORMAL;
@@ -39,11 +39,11 @@ Move Move_Bubble() {
 	move.name = STR_BUBBLE;
 	move.description = "Deals low     WATER damage  and SLOWS foe.";
 	move.type = T_WATER;
-	move.baseDamage = DAMAGE_LOW;
+	move.baseDamage = DAMAGE_VERYLOW;
 	move.effect = E_ENEMY_SPEED_LOW;
-	move.hitChance = HIT_ALWAYS;
+	move.hitChance = HIT_NORMAL;
 	move.criticalChance = CRIT_NORMAL;
-	move.effectChance = EFF_HIT_NORMAL;
+	move.effectChance = EFF_HIT_ALWAYS;
 	return move;
 }
 
