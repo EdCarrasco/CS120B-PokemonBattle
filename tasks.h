@@ -21,10 +21,10 @@
 #define TIME_3SEC	3000
 #define TIME_5SEC	5000
 
-unsigned long scenePeriod = 200; // ms
-unsigned long buttonPeriod = 100; // ms
-unsigned long tasksPeriod = 100; // ms
-unsigned long SNES_Button_Period = 100; // ms
+unsigned long scenePeriod = 50; // ms
+unsigned long buttonPeriod = 50; // ms
+unsigned long tasksPeriod = 50; // ms
+unsigned long SNES_Button_Period = 50; // ms
 
 typedef struct _Task {
 	int state;
@@ -42,16 +42,14 @@ enum SNES_L_States {SNES_L_Released, SNES_L_Pressed} SNES_L_State;
 enum SNES_R_States {SNES_R_Released, SNES_R_Pressed} SNES_R_State;
 
 enum Scene_States {SCENE_Start, SCENE_MainMenu, SCENE_PokemonMenu, SCENE_SettingsMenu,
-	SCENE_Battle_Intro, SCENE_Battle_ActionMenu, SCENE_Battle_MoveMenu, SCENE_Battle_MoveUsed, 
-	SCENE_Battle_MoveMiss, SCENE_Battle_MoveEffective, SCENE_Battle_MoveCritical, SCENE_Battle_MoveEffect,
-	SCENE_Battle_MoveResolution, /*SCENE_PlayerPokemonDead, SCENE_Battle_EnemyPokemonDead, */
-	SCENE_Battle_TrainerVictory, SCENE_Battle_TrainerDefeat, 
+	SCENE_Battle_Intro, SCENE_Battle_ActionMenu, SCENE_Battle_MoveMenu, 
+	SCENE_Battle_MoveUsed, SCENE_Battle_MoveMiss, SCENE_Battle_MoveEffective, SCENE_Battle_MoveCritical, SCENE_Battle_MoveEffect,
+	SCENE_Battle_MoveResolution, SCENE_Battle_TrainerVictory, SCENE_Battle_TrainerDefeat, 
+	SCENE_Battle_TurnStart, SCENE_Battle_PlayerTurn, SCENE_Battle_EnemyTurn, 
 	SCENE_Error
 } sceneState;
 enum MENU_ITEMS {MI_TopLeft, MI_TopRight, MI_BotLeft, MI_BotRight};
 
-int8_t menuLength = 4;
-uint8_t sceneIndex = SCENE_MainMenu;
 uint8_t pressedB = 0; // TODO: Combine into one variable or queue
 uint8_t pressedX = 0;
 uint8_t pressedLeft = 0;
@@ -140,6 +138,21 @@ typedef struct _MoveResult {
 
 MoveResult moveResult;
 
+void clearMoveResult() {
+	moveResult.moveName = "ERROR";
+	moveResult.moveIndex = 0;
+	moveResult.isHit = 0;
+	moveResult.isCritical = 0;
+	moveResult.effectiveness = 0;
+	moveResult.isEffectHit = 0;
+	moveResult.effect = E_NONE;
+	moveResult.attacker = 0;
+	moveResult.defender = 0;
+	moveResult.isPlayerDead = 0;
+	moveResult.isEnemyDead = 0;
+	
+}
+
 void generateMoveResult(uint8_t moveIndex, Trainer *attacker, Trainer *defender) {
 	moveResult.attacker = attacker;
 	moveResult.defender = defender;
@@ -180,8 +193,12 @@ void generateMoveResult(uint8_t moveIndex, Trainer *attacker, Trainer *defender)
 			health = 0;
 			moveResult.defender->pokemon[moveResult.defender->activeIndex].isKnockedOut = 1;
 			if (defender->isPlayer) {
+				NokiaLCD_SetLine(6,0);
+				NokiaLCD_WriteString("player dead ");
 				moveResult.isPlayerDead = 1;
 			} else {
+				NokiaLCD_SetLine(6,0);
+				NokiaLCD_WriteString("enemy dead ");
 				moveResult.isEnemyDead = 1;
 			}
 		}
@@ -250,9 +267,11 @@ void drawPokemonSprite(Trainer *trainer, uint8_t isPlayer) {
 
 void drawPokemonUI(Trainer* trainer, uint8_t isPlayer) {
 	uint8_t index = (*trainer).activeIndex;
-	if (isPlayer) NokiaLCD_SetCursor(31, 8*4);
+	char* pokemonName = trainer->pokemon[trainer->activeIndex].name;
+	uint8_t length = strlen(pokemonName);
+	if (isPlayer) NokiaLCD_SetCursor(84+2-1-length*6, 8*4);
 	else NokiaLCD_SetCursor(0, 0);
-	NokiaLCD_WriteString((*trainer).pokemon[index].name);
+	NokiaLCD_WriteString(pokemonName);
 	
 	if (isPlayer) NokiaLCD_SetCursor(24+49, 8*5);
 	else NokiaLCD_SetCursor(0, 8);
@@ -267,7 +286,7 @@ void drawPokemonUI(Trainer* trainer, uint8_t isPlayer) {
 	char* healthString[3];
 	char* healthMaxString[4];
 	//strncpy(buff,"xyz\0",4);
-	itoa(healthLost, healthString, 10);
+	itoa(health, healthString, 10);
 	itoa(healthMax, healthMaxString, 10);
 	if (isPlayer) {
 		NokiaLCD_SetCursor(84-1-7*6 ,3*8);
@@ -441,11 +460,17 @@ void init_SettingsMenu(uint8_t menuIndex) {
 	draw_SettingsMenu(menuIndex);
 }
 
+void restoreTrainer(Trainer *trainer) {
+	// TODO: Heal all pokemon
+}
+
 void init_BattleIntro(long displayTime) {
+	textDisplayTimer = displayTime;
 	uint8_t enemyLevel = 1;
 	initializeEnemyTrainer(enemyLevel);
+	restoreTrainer(&player);
+	clearMoveResult();
 	
-	textDisplayTimer = displayTime;
 	LCD_ClearScreen();
 	LCD_DisplayString(1, "Battle Intro");
 	LCD_Cursor(32);
@@ -454,8 +479,35 @@ void init_BattleIntro(long displayTime) {
 	NokiaLCD_WriteString("Intro");
 }
 
+void init_Battle_EnemyTurn(long displayTime) {
+	textDisplayTimer = displayTime;
+	LCD_ClearScreen();
+	LCD_DisplayString(1, "Enemy Turn");
+}
+
 void draw_Battle_ActionMenu(uint8_t menuIndex) {
 	drawMenuCursor(menuIndex, 4);
+}
+
+void drawDebugger() {
+	char * str[3];
+	itoa(player.pokemon[player.activeIndex].health, str, 10);
+	
+	NokiaLCD_Clear();
+	NokiaLCD_WriteString("DEBUGGER");
+	NokiaLCD_SetLine(2,0);
+	NokiaLCD_WriteString("HP P ");
+	NokiaLCD_WriteString(str);
+	NokiaLCD_WriteString(" E ");
+	itoa(enemy.pokemon[enemy.activeIndex].health, str, 10);
+	NokiaLCD_WriteString(str);
+	NokiaLCD_SetLine(3, 0);
+	NokiaLCD_WriteString("Dead P ");
+	itoa(moveResult.isPlayerDead, str, 10);
+	NokiaLCD_WriteString(str);
+	NokiaLCD_WriteString(" E ");
+	itoa(moveResult.isEnemyDead, str, 10);
+	NokiaLCD_WriteString(str);
 }
 
 void init_Battle_ActionMenu(uint8_t menuIndex) {
@@ -467,6 +519,7 @@ void init_Battle_ActionMenu(uint8_t menuIndex) {
 	drawPokemonSprite(&enemy, 0);
 	drawPokemonUI(&player, 1);
 	drawPokemonSprite(&player, 1);
+	//drawDebugger();
 	
 	draw_Battle_ActionMenu(menuIndex);
 }
@@ -493,17 +546,21 @@ void init_Battle_MoveMenu(uint8_t menuIndex) {
 	draw_Battle_MoveMenu(menuIndex);
 }
 
-void init_Battle_MoveUsed(uint8_t menuIndex, long displayTime) {
-	uint8_t moveIndex = player.pokemon[player.activeIndex].moveIds[menuIndex];
-	generateMoveResult(moveIndex, &player, &enemy);
-	
+void init_Battle_MoveUsed(long displayTime) {
 	textDisplayTimer = displayTime;
+	
 	LCD_ClearScreen();
-	char* pokemonName = player.pokemon[player.activeIndex].name;
-	LCD_DisplayString(1, pokemonName);
-	LCD_DisplayString(1+strlen(pokemonName), " used");
-	LCD_DisplayString(17, moveResult.moveName);
-	LCD_DisplayString(17+strlen(moveResult.moveName), "!");
+	char * pokemonName = moveResult.attacker->pokemon[moveResult.attacker->activeIndex].name;
+	if (!moveResult.attacker->isPlayer) {
+		LCD_DisplayString(1, "Enemy ");
+		LCD_DisplayString(7, pokemonName);
+	} else {
+		LCD_DisplayString(1, pokemonName);
+	}
+	//LCD_DisplayString(1+strlen(pokemonName), " used");
+	LCD_DisplayString(17, "used ");
+	LCD_DisplayString(22, moveResult.moveName);
+	LCD_DisplayString(22+strlen(moveResult.moveName), "!");
 	LCD_Cursor(32);
 	
 	NokiaLCD_Clear();
@@ -514,12 +571,16 @@ void init_Battle_MoveUsed(uint8_t menuIndex, long displayTime) {
 }
 
 void init_Battle_MoveMiss(long displayTime) {
+	textDisplayTimer = displayTime;
+	
 	LCD_ClearScreen();
 	LCD_DisplayString(1, "But it missed!");
 	LCD_Cursor(32);
 }
 
 void init_Battle_MoveEffective(long displayTime) {
+	textDisplayTimer = displayTime;
+	
 	LCD_ClearScreen();
 	if (moveResult.effectiveness == TE_STRONG) {
 		LCD_DisplayString(1, "It is super");
@@ -534,19 +595,28 @@ void init_Battle_MoveEffective(long displayTime) {
 }
 
 void init_Battle_MoveCritical(long displayTime) {
+	textDisplayTimer = displayTime;
+	
 	LCD_ClearScreen();
 	LCD_DisplayString(1, "A critical hit!");
 	LCD_Cursor(32);
 }
 
 void init_Battle_MoveEffect(long displayTime) {
+	textDisplayTimer = displayTime;
+	
 	LCD_ClearScreen();
-	char * effectText = moveList[moveResult.moveIndex].description;
-	LCD_DisplayString(1, effectText);
+	// TODO: Distinguish between offensive and defensive effects
+	char * pokemonName = moveResult.defender->pokemon[moveResult.defender->activeIndex].name;
+	char * effectText = moveList[moveResult.moveIndex].effectDescription;
+	LCD_DisplayString(1, pokemonName);
+	LCD_DisplayString(17, effectText);
 	LCD_Cursor(32);
 }
 
 void init_Battle_TrainerVictory(long displayTime) {
+	textDisplayTimer = displayTime;
+	
 	LCD_ClearScreen();
 	LCD_DisplayString(1, "You won!");
 	LCD_Cursor(32);
@@ -557,6 +627,8 @@ void init_Battle_TrainerVictory(long displayTime) {
 }
 
 void init_Battle_TrainerDefeat(long displayTime) {
+	textDisplayTimer = displayTime;
+	
 	LCD_ClearScreen();
 	LCD_DisplayString(1, "You lost!");
 	LCD_Cursor(32);
@@ -590,9 +662,70 @@ int8_t constraint(int8_t index, int8_t length) {
 	return index;
 }
 
+uint8_t generateMoveIndex(Trainer *attacker, Trainer *defender) {
+	uint8_t moveIndex = rand() % 4;
+	return moveIndex;
+}
+
+void nokiaDebug(uint8_t state) {
+	NokiaLCD_SetLine(1, 0);
+	
+	char* str;
+	
+	NokiaLCD_WriteString("Dead P ");
+	itoa(moveResult.isPlayerDead, str, 10);
+	NokiaLCD_WriteString(str);
+	NokiaLCD_WriteString(" E ");
+	itoa(moveResult.isEnemyDead, str, 10);
+	NokiaLCD_WriteString(str);
+}
+
+void nokiaDebug_OLD(uint8_t state) {
+	NokiaLCD_SetLine(1, 0);
+	switch (state) {
+		case SCENE_Start: NokiaLCD_WriteString("Start "); break;
+		case SCENE_MainMenu: NokiaLCD_WriteString("MainMenu "); break;
+		case SCENE_PokemonMenu: NokiaLCD_WriteString("PokemonMenu "); break;
+		case SCENE_SettingsMenu: NokiaLCD_WriteString("SettingsMenu "); break;
+		case SCENE_Battle_Intro: NokiaLCD_WriteString("BattleIntro "); break;
+		case SCENE_Battle_TurnStart: NokiaLCD_WriteString("TurnStart "); break;
+		case SCENE_Battle_PlayerTurn: NokiaLCD_WriteString("PlayerTurn "); break;
+		case SCENE_Battle_EnemyTurn: NokiaLCD_WriteString("EnemyTurn "); break;
+		case SCENE_Battle_ActionMenu: NokiaLCD_WriteString("ActionMenu "); break;
+		case SCENE_Battle_MoveMenu: NokiaLCD_WriteString("MoveMenu "); break;
+		case SCENE_Battle_MoveUsed: NokiaLCD_WriteString("MoveUsed "); break;
+		case SCENE_Battle_MoveMiss: NokiaLCD_WriteString("MoveMiss "); break;
+		case SCENE_Battle_MoveEffective: NokiaLCD_WriteString("MoveEffective "); break;
+		case SCENE_Battle_MoveCritical: NokiaLCD_WriteString("MoveCritical "); break;
+		case SCENE_Battle_MoveEffect: NokiaLCD_WriteString("MoveEffect "); break;
+		case SCENE_Battle_MoveResolution: NokiaLCD_WriteString("MoveResolution "); break;
+		case SCENE_Battle_TrainerVictory: NokiaLCD_WriteString("TrainerVictory "); break;
+		case SCENE_Battle_TrainerDefeat: NokiaLCD_WriteString("TrainerDefeat "); break;
+		case SCENE_Error: NokiaLCD_WriteString("Scene:Error "); break;
+		default: NokiaLCD_WriteString("SCN: ??? "); break;
+	}
+	NokiaLCD_SetLine(2, 0);
+	NokiaLCD_WriteString("Time: ");
+	if (textDisplayTimer >= TIME_3SEC) {
+		NokiaLCD_WriteString("> 3sec ");
+	} else if (textDisplayTimer >= TIME_2SEC) {
+		NokiaLCD_WriteString("> 2sec ");
+	} else if (textDisplayTimer >= TIME_1SEC) {
+		NokiaLCD_WriteString("> 1sec ");
+	} else if (textDisplayTimer >= 500) {
+		NokiaLCD_WriteString(">.5sec ");
+	} else if (textDisplayTimer > 0) {
+		NokiaLCD_WriteString(">.1sec ");
+	} else {
+		NokiaLCD_WriteString(" 0 sec ");
+	}
+}
+
 int Scene_Tick(int state) {
 	static int8_t menuIndex = 0;
 	static int8_t nokiaMenuIndex = 0;
+	static uint8_t playerTurn = 1;
+	uint8_t textSceneOver = textDisplayTimer <= 0 || pressedB;
 	
 	switch (state) {
 		case SCENE_Start:
@@ -648,14 +781,40 @@ int Scene_Tick(int state) {
 			}
 			break;
 		case SCENE_Battle_Intro:
-			if (textDisplayTimer < 0 || pressedB) {
+			if (textSceneOver) {
 				clearButtons();
-				state = SCENE_Battle_ActionMenu;
-				menuIndex = MI_TopLeft;
-				init_Battle_ActionMenu(menuIndex);
+				state = SCENE_Battle_TurnStart;
+				//menuIndex = MI_TopLeft;
+				//init_Battle_ActionMenu(menuIndex);
 			} else {
 				state = SCENE_Battle_Intro;
 			}
+			break;
+		case SCENE_Battle_TurnStart:
+			//state = (playerTurn) ? SCENE_Battle_PlayerTurn : SCENE_Battle_EnemyTurn;
+			if (playerTurn) {
+				state = SCENE_Battle_PlayerTurn;
+			} else {
+				state = SCENE_Battle_EnemyTurn;
+				init_Battle_EnemyTurn(TIME_3SEC);
+			}
+			playerTurn = !playerTurn;
+			break;
+		case SCENE_Battle_PlayerTurn:
+			state = SCENE_Battle_ActionMenu;
+			menuIndex = MI_TopLeft;
+			init_Battle_ActionMenu(menuIndex);
+			break;
+		case SCENE_Battle_EnemyTurn:
+			if (textSceneOver) {
+				clearButtons();
+				generateMoveResult(generateMoveIndex(&enemy, &player), &enemy, &player);
+				state = SCENE_Battle_MoveUsed;
+				init_Battle_MoveUsed(TIME_3SEC);
+			} else {
+				state = SCENE_Battle_EnemyTurn;
+			}
+			
 			break;
 		case SCENE_Battle_ActionMenu:
 			if (pressedB) {
@@ -702,8 +861,9 @@ int Scene_Tick(int state) {
 		case SCENE_Battle_MoveMenu:
 			if (pressedB) {
 				clearButtons();
+				generateMoveResult(player.pokemon[player.activeIndex].moveIds[menuIndex], &player, &enemy);
 				state = SCENE_Battle_MoveUsed;
-				init_Battle_MoveUsed(menuIndex, TIME_3SEC);
+				init_Battle_MoveUsed(TIME_3SEC);
 			} else if (pressedX) {
 				clearButtons();
 				state = SCENE_Battle_ActionMenu;
@@ -711,26 +871,30 @@ int Scene_Tick(int state) {
 				init_Battle_ActionMenu(menuIndex);
 			} else if (pressedLeft) {
 				clearButtons();
+				state = SCENE_Battle_MoveMenu;
 				menuIndex = constraint(menuIndex-1, 4);
 				draw_Battle_MoveMenu(menuIndex);
 			} else if (pressedRight) {
 				clearButtons();
+				state = SCENE_Battle_MoveMenu;
 				menuIndex = constraint(menuIndex+1, 4);
 				draw_Battle_MoveMenu(menuIndex);
 			} else if (pressedUp) {
 				clearButtons();
+				state = SCENE_Battle_MoveMenu;
 				menuIndex = constraint(menuIndex-2, 4);
 				draw_Battle_MoveMenu(menuIndex);
 			} else if (pressedDown) {
 				clearButtons();
+				state = SCENE_Battle_MoveMenu;
 				menuIndex = constraint(menuIndex+2, 4);
 				draw_Battle_MoveMenu(menuIndex);
 			} else {
-			
+				state = SCENE_Battle_MoveMenu;
 			}
 			break;
 		case SCENE_Battle_MoveUsed:
-			if (textDisplayTimer < 0 || pressedB) {
+			if (textSceneOver) {
 				clearButtons();
 				if (!moveResult.isHit) {
 					state = SCENE_Battle_MoveMiss;
@@ -758,7 +922,7 @@ int Scene_Tick(int state) {
 			}
 			break;
 		case SCENE_Battle_MoveMiss:
-			if (textDisplayTimer < 0 || pressedB) {
+			if (textSceneOver) {
 				clearButtons();
 				state = SCENE_Battle_MoveResolution;
 			} else {
@@ -766,7 +930,7 @@ int Scene_Tick(int state) {
 			}
 			break;
 		case SCENE_Battle_MoveEffective:
-			if (textDisplayTimer < 0 || pressedB) {
+			if (textSceneOver) {
 				clearButtons();
 				if (moveResult.isCritical) {
 					state = SCENE_Battle_MoveCritical;
@@ -775,16 +939,27 @@ int Scene_Tick(int state) {
 					state = SCENE_Battle_MoveEffect;
 					init_Battle_MoveEffect(TIME_3SEC);
 				} else {
-					state = SCENE_Battle_ActionMenu;
-					menuIndex = MI_TopLeft;
-					init_Battle_ActionMenu(menuIndex);
+					state = SCENE_Battle_MoveResolution;
 				}
 			} else {
 				state = SCENE_Battle_MoveEffective;
 			}
 			break;
+		case SCENE_Battle_MoveCritical:
+			if (textSceneOver) {
+				clearButtons();
+				if (moveResult.isEffectHit) {
+					state = SCENE_Battle_MoveEffect;
+					init_Battle_MoveEffect(TIME_3SEC);
+				} else {
+					state = SCENE_Battle_MoveResolution;
+				}
+			} else {
+				state = SCENE_Battle_MoveCritical;
+			}
+			break;
 		case SCENE_Battle_MoveEffect:
-			if (textDisplayTimer < 0 || pressedB) {
+			if (textSceneOver) {
 				clearButtons();
 				state = SCENE_Battle_MoveResolution;
 			} else {
@@ -799,13 +974,11 @@ int Scene_Tick(int state) {
 				state = SCENE_Battle_TrainerDefeat;
 				init_Battle_TrainerDefeat(TIME_5SEC);
 			} else {
-				state = SCENE_Battle_ActionMenu;
-				menuIndex = MI_TopLeft;
-				init_Battle_ActionMenu(menuIndex);
+				state = SCENE_Battle_TurnStart;
 			}
 			break;
 		case SCENE_Battle_TrainerVictory:
-			if (textDisplayTimer < 0 || pressedB) {
+			if (textSceneOver) {
 				clearButtons();
 				state = SCENE_MainMenu;
 				menuIndex = MI_TopRight;
@@ -815,7 +988,7 @@ int Scene_Tick(int state) {
 			}
 			break;
 		case SCENE_Battle_TrainerDefeat:
-			if (textDisplayTimer < 0 || pressedB) {
+			if (textSceneOver) {
 				clearButtons();
 				state = SCENE_MainMenu;
 				menuIndex = MI_TopRight;
@@ -897,33 +1070,31 @@ int Scene_Tick(int state) {
 			break;
 	}
 	
+	//textDisplayTimer -= scenePeriod;
+	reduceHealthLost(&player, 2);
+	reduceHealthLost(&enemy, 2);
+	
 	switch (state) {
 		case SCENE_Start:
 		case SCENE_MainMenu:
 		case SCENE_PokemonMenu:
 		case SCENE_SettingsMenu:
-			textDisplayTimer = 0;
-			break;
 		case SCENE_Battle_Intro:
-			textDisplayTimer -= scenePeriod;
-			break;
+		case SCENE_Battle_TurnStart:
+		case SCENE_Battle_PlayerTurn:
+		case SCENE_Battle_EnemyTurn:
 		case SCENE_Battle_ActionMenu:
 		case SCENE_Battle_MoveMenu:
-		case SCENE_Battle_MoveResolution:
-			textDisplayTimer = 0;
-			reduceHealthLost(&player, 2);
-			reduceHealthLost(&enemy, 2);
 			break;
 		case SCENE_Battle_MoveUsed:
+			break;
 		case SCENE_Battle_MoveMiss:
 		case SCENE_Battle_MoveEffective:
 		case SCENE_Battle_MoveCritical:
 		case SCENE_Battle_MoveEffect:
+		case SCENE_Battle_MoveResolution:
 		case SCENE_Battle_TrainerDefeat:
 		case SCENE_Battle_TrainerVictory:
-			textDisplayTimer -= scenePeriod;
-			reduceHealthLost(&player, 2);
-			reduceHealthLost(&enemy, 2);
 			drawPokemonUI(&player, 1);
 			drawPokemonUI(&enemy, 0);
 			break;
@@ -931,6 +1102,9 @@ int Scene_Tick(int state) {
 		default:
 			break;
 	}
+	
+	//nokiaDebug(state);
+	
 	return state;
 };
 
@@ -938,10 +1112,7 @@ enum SNES_B_States {SNES_B_Released, SNES_B_Pressed} SNES_B_State;
 int SNES_B_Tick(int state) {
 	switch(state) {
 		case SNES_B_Released:
-			if (SNES_B && textDisplayTimer > 0) {
-				textDisplayTimer = 0;
-				state = SNES_B_Pressed;
-			} else if (SNES_B && textDisplayTimer <= 0) {
+			if (SNES_B/* && textDisplayTimer <= 0*/) {
 				state = SNES_B_Pressed;
 				pressedB = 1;
 			} else {
@@ -959,7 +1130,7 @@ enum SNES_X_States {SNES_X_Released, SNES_X_Pressed} SNES_X_State;
 int SNES_X_Tick(int state) {
 	switch(state) {
 		case SNES_X_Released:
-			if (SNES_X && textDisplayTimer <= 0) {
+			if (SNES_X/* && textDisplayTimer <= 0*/) {
 				state = SNES_X_Pressed;
 				pressedX = 1;
 			} else {
@@ -976,7 +1147,7 @@ int SNES_X_Tick(int state) {
 int SNES_LEFT_Tick(int state) {
 	switch(state) {
 		case SNES_LEFT_Released:
-			if (SNES_LEFT && textDisplayTimer <= 0) {
+			if (SNES_LEFT/* && textDisplayTimer <= 0*/) {
 				state = SNES_LEFT_Pressed;
 				pressedLeft = 1;
 			} else {
@@ -994,7 +1165,7 @@ int SNES_LEFT_Tick(int state) {
 int SNES_RIGHT_Tick(int state) {
 	switch(state) {
 		case SNES_RIGHT_Released:
-			if (SNES_RIGHT && textDisplayTimer <= 0) {
+			if (SNES_RIGHT/* && textDisplayTimer <= 0*/) {
 				state = SNES_RIGHT_Pressed;
 				pressedRight = 1;
 			} else {
@@ -1011,7 +1182,7 @@ int SNES_RIGHT_Tick(int state) {
 int SNES_L_Tick(int state) {
 	switch(state) {
 		case SNES_L_Released:
-			if (SNES_L && textDisplayTimer <= 0) {
+			if (SNES_L/* && textDisplayTimer <= 0*/) {
 				state = SNES_L_Pressed;
 				//pressed_L = 1;
 			} else {
@@ -1028,7 +1199,7 @@ int SNES_L_Tick(int state) {
 int SNES_R_Tick(int state) {
 	switch(state) {
 		case SNES_R_Released:
-			if (SNES_R && textDisplayTimer <= 0) {
+			if (SNES_R/* && textDisplayTimer <= 0*/) {
 				state = SNES_R_Pressed;
 				//pressed_R = 1;	
 			} else {

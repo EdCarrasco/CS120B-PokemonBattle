@@ -19,6 +19,8 @@ Pokemon new_Pokemon(uint8_t pokemonId) {
 			return Pokemon_Squirtle();
 		case ID_CHARMANDER:
 			return Pokemon_Charmander();
+		default:
+			return Pokemon_Bulbasaur();
 	}
 }
 
@@ -27,7 +29,7 @@ Pokemon Pokemon_Bulbasaur() {
 	pokemon.spriteFrontIndex = BITMAP_BULBASAUR_FRONT;
 	pokemon.spriteBackIndex = BITMAP_BULBASAUR_FRONT;
 	pokemon.name = STR_BULBASAUR;
-	pokemon.type = T_WATER;
+	pokemon.type = T_GRASS;
 	pokemon.level = 1;
 	pokemon.health = HEALTH_NORMAL;
 	pokemon.healthMax = HEALTH_NORMAL;

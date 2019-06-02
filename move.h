@@ -16,6 +16,7 @@ enum MOVE_IDS {ID_TACKLE, ID_VINEWHIP, ID_BUBBLE, ID_EMBER};
 typedef struct _Move {
     char* name;
 	char* description;
+	char* effectDescription;
     uint8_t type;
     uint8_t baseDamage;
     uint8_t effect;
