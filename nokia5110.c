@@ -161,14 +161,16 @@ void NokiaLCD_WriteChar(char code) {
 	}
 }
 
-void NokiaLCD_CustomBitmap(const uint8_t bitmap[20][3], uint8_t xoffset, uint8_t yoffset, uint8_t flipX) {
+void NokiaLCD_CustomBitmap(const uint8_t bitmap[20][3], int8_t xoffset, int8_t yoffset, uint8_t flipX) {
 	const uint8_t ROWS = 20, COLS = 3;
 	uint8_t col, row, bit;
 	for (row = 0; row < ROWS; row++) {
 		for (col = 0; col < COLS; col++) {
 			for (bit = 0; bit < 8; bit++) {
-				uint8_t x = xoffset + (col*8) + bit;
-				uint8_t y = yoffset + row;
+				int8_t x = xoffset + (col*8) + bit;
+				if (x < 0 || x >= 84) continue;
+				int8_t y = yoffset + row;
+				if (y < 0 || y >= 48) continue;
 				uint8_t r = row;
 				uint8_t c = (flipX) ? COLS-col-1 : col;
 				uint8_t b = (flipX) ? bit : 7-bit;

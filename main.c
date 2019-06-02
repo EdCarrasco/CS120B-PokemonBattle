@@ -88,14 +88,25 @@ int main(void)
 	unsigned char i = 0;
 	tasks[i].state = SNES_RIGHT_Released;
 	tasks[i].period = SNES_Button_Period;
-	tasks[i].elapsedTime = tasks[i].period;
+	tasks[i].elapsedTime = SNES_Button_Period;
 	tasks[i].TickFunction = &SNES_RIGHT_Tick;
 	i++;
 	tasks[i].state = SNES_LEFT_Released;
 	tasks[i].period = SNES_Button_Period;
-	tasks[i].elapsedTime = tasks[i].period;
+	tasks[i].elapsedTime = SNES_Button_Period;
 	tasks[i].TickFunction = &SNES_LEFT_Tick;
 	i++;
+	tasks[i].state = SNES_UP_Released;
+	tasks[i].period = SNES_Button_Period;
+	tasks[i].elapsedTime = SNES_Button_Period;
+	tasks[i].TickFunction = &SNES_UP_Tick;
+	i++;
+	tasks[i].state = SNES_DOWN_Released;
+	tasks[i].period = SNES_Button_Period;
+	tasks[i].elapsedTime = SNES_Button_Period;
+	tasks[i].TickFunction = &SNES_DOWN_Tick;
+	i++;
+	
 	tasks[i].state = SNES_B_Released;
 	tasks[i].period = SNES_Button_Period;
 	tasks[i].elapsedTime = tasks[i].period;

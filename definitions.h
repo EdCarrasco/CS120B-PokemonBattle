@@ -47,8 +47,8 @@
 #define SPEED_FAST		12
 
 #define HEALTH_LOW		80
-#define HEALTH_NORMAL	100
-#define HEALTH_HIGH		120
+#define HEALTH_NORMAL	90
+#define HEALTH_HIGH		99
 
 #define DAMAGE_LOWEST	1
 #define DAMAGE_UBERLOW	5
