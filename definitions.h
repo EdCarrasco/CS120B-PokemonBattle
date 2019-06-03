@@ -10,13 +10,15 @@
 #define DEFINITIONS_H_
 
 #define BITMAP_BULBASAUR_FRONT		0
-#define BITMAP_CHARMANDER_FRONT		1
+#define BITMAP_SQUIRTLE_FRONT		1
+#define BITMAP_CHARMANDER_FRONT		2
 
 #define STR_BULBASAUR	"Bulbasaur"
 #define STR_SQUIRTLE	"Squirtle"
 #define STR_CHARMANDER	"Charmander"
 
 #define STR_TACKLE		"Tackle"
+#define STR_BITE		"Bite"
 
 #define STR_VINEWHIP	"VineWhip"
 #define STR_BUBBLE		"Bubble"
@@ -105,7 +107,8 @@ enum Pokemon_Effects {
     E_SELF_ACCURACY_HIGH,
     E_ENEMY_ACCURACY_LOW,
     E_SELF_SPEED_HIGH,
-    E_ENEMY_SPEED_LOW
+    E_ENEMY_SPEED_LOW,
+	E_FLINCH
 };
 
 #endif /* DEFINITIONS_H_ */

@@ -52,8 +52,8 @@ Pokemon Pokemon_Bulbasaur() {
 
 Pokemon Pokemon_Squirtle() {
 	Pokemon pokemon;
-	pokemon.spriteFrontIndex = BITMAP_BULBASAUR_FRONT;
-	pokemon.spriteBackIndex = BITMAP_BULBASAUR_FRONT;
+	pokemon.spriteFrontIndex = BITMAP_SQUIRTLE_FRONT;
+	pokemon.spriteBackIndex = BITMAP_SQUIRTLE_FRONT;
 	pokemon.name = STR_SQUIRTLE;
 	pokemon.type = T_WATER;
 	pokemon.level = 1;
@@ -67,7 +67,7 @@ Pokemon Pokemon_Squirtle() {
 	pokemon.attack = ATTACK_NORMAL;
 	pokemon.defense = DEFENSE_NORMAL;
 	pokemon.agility = SPEED_NORMAL;
-	pokemon.moveIds[0] = ID_TACKLE;
+	pokemon.moveIds[0] = ID_BITE;
 	pokemon.moveIds[1] = ID_VINEWHIP;
 	pokemon.moveIds[2] = ID_BUBBLE;
 	pokemon.moveIds[3] = ID_EMBER;

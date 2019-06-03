@@ -193,7 +193,9 @@ void NokiaLCD_HealthBar(uint8_t xoffset, uint8_t yoffset, uint8_t health, uint8_
 	for (row = 0; row < barHeight; row++) {
 		for (col = 0; col < barWidth; col++) {
     		if (row == 0 || row == barHeight-1) {
-				NokiaLCD_SetPixel(xoffset+col, yoffset+row, 1);
+				if (col != 0 && col != barWidth-1) {
+					NokiaLCD_SetPixel(xoffset+col, yoffset+row, 1);
+				}
 			} else {
 				if ((col >= 0 && col <= healthWidth) || (col == barWidth-1)) {
 					NokiaLCD_SetPixel(xoffset+col, yoffset+row, 1);
