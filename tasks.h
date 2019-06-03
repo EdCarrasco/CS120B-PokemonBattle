@@ -41,11 +41,12 @@ enum SNES_RIGHT_States {SNES_RIGHT_Released, SNES_RIGHT_Pressed} SNES_RIGHT_Stat
 enum SNES_L_States {SNES_L_Released, SNES_L_Pressed} SNES_L_State;
 enum SNES_R_States {SNES_R_Released, SNES_R_Pressed} SNES_R_State;
 
-enum Scene_States {SCENE_Start, SCENE_MainMenu, SCENE_PokemonMenu, SCENE_SettingsMenu,
+enum Scene_States {
+	SCENE_Start, SCENE_MainMenu, SCENE_PokemonMenu, SCENE_SettingsMenu,
 	SCENE_Battle_Intro, SCENE_Battle_ActionMenu, SCENE_Battle_MoveMenu, 
-	SCENE_Battle_MoveUsed, SCENE_Battle_MoveMiss, SCENE_Battle_MoveEffective, SCENE_Battle_MoveCritical, SCENE_Battle_MoveEffect,
+	SCENE_Battle_Start, SCENE_Battle_RoundStart, SCENE_Battle_TurnStart, SCENE_Battle_PlayerTurn, SCENE_Battle_EnemyTurn, 
+	SCENE_Battle_MoveUsed, SCENE_Battle_MoveMiss, SCENE_Battle_MoveEffective, SCENE_Battle_MoveCritical, SCENE_Battle_MoveEffect, 
 	SCENE_Battle_MoveResolution, SCENE_Battle_TrainerVictory, SCENE_Battle_TrainerDefeat, 
-	SCENE_Battle_RoundStart, SCENE_Battle_TurnStart, SCENE_Battle_PlayerTurn, SCENE_Battle_EnemyTurn, 
 	SCENE_Error
 } sceneState;
 enum MENU_ITEMS {MI_TopLeft, MI_TopRight, MI_BotLeft, MI_BotRight};
@@ -373,6 +374,15 @@ void draw_PokemonMenu(int8_t menuIndex, int8_t nokiaMenuIndex) {
 	switch (menuIndex) {
 		case MI_TopLeft:
 			NokiaLCD_SetLine(3, 0);
+			NokiaLCD_WriteString("Location: ");
+			NokiaLCD_SetLine(4,0);
+			if (nokiaMenuIndex == player.favoriteIndex) NokiaLCD_WriteString("  Main");
+			else NokiaLCD_WriteString("  Bench");
+			break;
+			default:
+			break;
+		case MI_TopRight:
+			NokiaLCD_SetLine(3, 0);
 			NokiaLCD_WriteString(moveList[m0].name);
 			NokiaLCD_SetLine(4, 0);
 			NokiaLCD_WriteString(moveList[m1].name);
@@ -380,14 +390,6 @@ void draw_PokemonMenu(int8_t menuIndex, int8_t nokiaMenuIndex) {
 			NokiaLCD_WriteString(moveList[m2].name);
 			NokiaLCD_SetLine(6, 0);
 			NokiaLCD_WriteString(moveList[m3].name);
-			break;
-		case MI_TopRight:
-			NokiaLCD_SetLine(3, 0);
-			NokiaLCD_WriteString("Location: ");
-			NokiaLCD_SetLine(4,0);
-			NokiaLCD_WriteString("  Main");
-			break;
-		default:
 			break;
 	}
 	drawPokemonSprite(&player, nokiaMenuIndex, 0);
@@ -397,10 +399,11 @@ void draw_PokemonMenu(int8_t menuIndex, int8_t nokiaMenuIndex) {
 void update_PokemonMenu(int8_t menuIndex, int8_t nokiaMenuIndex) {
 	switch (menuIndex) {
 		case MI_TopLeft:
-			// TODO
+			player.favoriteIndex = nokiaMenuIndex;
+			player.activeIndex = nokiaMenuIndex;
 			break;
 		case MI_TopRight:
-			player.favoriteIndex = nokiaMenuIndex;
+			// TODO: Do nothing. Draw will display a list of moves on the same screen
 			break;
 	}
 	draw_PokemonMenu(menuIndex, nokiaMenuIndex);
@@ -408,10 +411,7 @@ void update_PokemonMenu(int8_t menuIndex, int8_t nokiaMenuIndex) {
 
 void init_PokemonMenu(int8_t menuIndex, int8_t nokiaMenuIndex) {
 	LCD_ClearScreen();
-	LCD_DisplayMenu2("Moves", "SetMain");
-	
-	NokiaLCD_Clear();
-	NokiaLCD_WriteString("Pokemon List");
+	LCD_DisplayMenu2("SetMain", "Moves");
 	
 	draw_PokemonMenu(menuIndex, nokiaMenuIndex);
 }
@@ -460,7 +460,6 @@ void init_SettingsMenu(uint8_t menuIndex) {
 }
 
 void restoreTrainer(Trainer *trainer) {
-	// TODO: Heal all pokemon
 	uint8_t i;
 	for (i = 0; i < trainer->pokemonLength; i++) {
 		trainer->pokemon[i].health = trainer->pokemon[i].healthMax;
@@ -478,10 +477,11 @@ void init_BattleIntro(long displayTime) {
 	initializeEnemyTrainer(enemyLevel);
 	restoreTrainer(&player);
 	clearMoveResult();
+	player.activeIndex = player.favoriteIndex;
 	
 	LCD_ClearScreen();
-	LCD_DisplayString(1, "A wild ");
-	LCD_DisplayString(8, getPokemonName(&enemy));
+	LCD_DisplayString(1, "Wild ");
+	LCD_DisplayString(6, getPokemonName(&enemy));
 	LCD_DisplayString(17, "appears!");
 	LCD_Cursor(32);
 	
@@ -491,7 +491,10 @@ void init_BattleIntro(long displayTime) {
 void init_Battle_EnemyTurn(long displayTime) {
 	textDisplayTimer = displayTime;
 	LCD_ClearScreen();
-	LCD_DisplayString(1, "Enemy Turn");
+	LCD_Cursor(1);
+	LCD_DisplayString(6, "Enemy");
+	LCD_DisplayString(24, "Turn");
+	LCD_Cursor(32);
 }
 
 void draw_Battle_ActionMenu(uint8_t menuIndex) {
@@ -742,6 +745,7 @@ int Scene_Tick(int state) {
 	static uint8_t tickCounter = 0;
 	static uint8_t roundCounter = 0;
 	static uint8_t turnCounter = 0;
+	static uint8_t inBattle = 0;		// bool. used to know to which state to back to, when in certain states
 	tickCounter++;
 	
 	switch (state) {
@@ -755,22 +759,15 @@ int Scene_Tick(int state) {
 			init_MainMenu(menuIndex);
 			break;
 		case SCENE_MainMenu:
+			inBattle = 0;
 			if (pressedB) {
 				clearButtons();
 				switch(menuIndex) {
 					case MI_TopLeft:
-						state = SCENE_Battle_Intro;
-						init_BattleIntro(TIME_3SEC);
-						xscroll = 0;
-						yscroll = 0;
-						playerTurn = 1;
+						state = SCENE_Battle_Start;
 						break;
 					case MI_TopRight:
-						state = SCENE_Battle_Intro;
-						init_BattleIntro(TIME_3SEC);
-						xscroll = 0;
-						yscroll = 0;
-						playerTurn = 1;
+						state = SCENE_Battle_Start;
 						break;
 					case MI_BotLeft:
 						state = SCENE_PokemonMenu;
@@ -803,12 +800,22 @@ int Scene_Tick(int state) {
 				state = SCENE_MainMenu;
 			}
 			break;
+		case SCENE_Battle_Start:
+			inBattle = 1;
+			xscroll = 0;
+			yscroll = 0;
+			roundCounter = 0;
+			turnCounter = 0;
+			playerTurn = 1;
+			state = SCENE_Battle_Intro;
+			init_BattleIntro(TIME_3SEC);
+			break;
 		case SCENE_Battle_Intro:
+			
 			if (textSceneOver) {
 				clearButtons();
 				state = SCENE_Battle_RoundStart;
-				roundCounter = 0;
-				turnCounter = 0;
+				
 			} else {
 				state = SCENE_Battle_Intro;
 			}
@@ -822,12 +829,8 @@ int Scene_Tick(int state) {
 			turnCounter++;
 			if (turnCounter%3 == 0) {
 				state = SCENE_Battle_RoundStart;
-			} else if (playerTurn) {
-				state = SCENE_Battle_PlayerTurn;
-				playerTurn = !playerTurn;
 			} else {
-				state = SCENE_Battle_EnemyTurn;
-				init_Battle_EnemyTurn(TIME_3SEC);
+				state = (playerTurn) ? SCENE_Battle_PlayerTurn : SCENE_Battle_EnemyTurn;
 				playerTurn = !playerTurn;
 			}
 			break;
@@ -837,15 +840,9 @@ int Scene_Tick(int state) {
 			init_Battle_ActionMenu(menuIndex);
 			break;
 		case SCENE_Battle_EnemyTurn:
-			if (textSceneOver) {
-				clearButtons();
-				generateMoveResult(generateMoveIndex(&enemy, &player), &enemy, &player);
-				state = SCENE_Battle_MoveUsed;
-				init_Battle_MoveUsed(TIME_3SEC);
-			} else {
-				state = SCENE_Battle_EnemyTurn;
-			}
-			
+			generateMoveResult(generateMoveIndex(&enemy, &player), &enemy, &player);
+			state = SCENE_Battle_MoveUsed;
+			init_Battle_MoveUsed(TIME_3SEC);
 			break;
 		case SCENE_Battle_ActionMenu:
 			if (pressedB) {
@@ -860,7 +857,9 @@ int Scene_Tick(int state) {
 						// TODO: Enemy view
 						break;
 					case MI_BotLeft:
-						// TODO: Switch pokemon
+						state = SCENE_PokemonMenu;
+						menuIndex = MI_TopLeft;
+						init_PokemonMenu(menuIndex, player.activeIndex);
 						break;
 					case MI_BotRight:
 						state = SCENE_MainMenu;
@@ -1036,9 +1035,14 @@ int Scene_Tick(int state) {
 				draw_PokemonMenu(menuIndex, nokiaMenuIndex);
 			} else if (pressedX) {
 				clearButtons();
-				state = SCENE_MainMenu;
 				menuIndex = MI_BotLeft;
-				init_MainMenu(menuIndex);
+				if (inBattle) {
+					state = SCENE_Battle_ActionMenu;
+					init_Battle_ActionMenu(menuIndex);
+				} else {
+					state = SCENE_MainMenu;
+					init_MainMenu(menuIndex);
+				}
 			} else if (pressedLeft) {
 				clearButtons();
 				state = SCENE_PokemonMenu;
@@ -1118,6 +1122,7 @@ int Scene_Tick(int state) {
 		case SCENE_SettingsMenu:
 		case SCENE_Battle_ActionMenu:
 		case SCENE_Battle_MoveMenu:
+		case SCENE_Battle_Start:
 			break;
 		case SCENE_Battle_Intro:
 			{

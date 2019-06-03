@@ -78,7 +78,7 @@ Move Move_Bubble() {
 	move.description = "Deals low     WATER damage  and SLOWS foe.";
 	move.effectDescription = "was slowed!";
 	move.type = T_WATER;
-	move.baseDamage = DAMAGE_VERYLOW;
+	move.baseDamage = DAMAGE_LOW;
 	move.effect = E_ENEMY_SPEED_LOW;
 	move.hitChance = HIT_NORMAL;
 	move.criticalChance = CRIT_NORMAL;
