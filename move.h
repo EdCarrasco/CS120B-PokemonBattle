@@ -11,7 +11,11 @@
 #include <stdint.h>
 #include "definitions.h"
 
-enum MOVE_IDS {ID_TACKLE, ID_VINEWHIP, ID_BUBBLE, ID_EMBER, ID_BITE};
+enum MOVE_IDS {
+	ID_TACKLE, ID_ABSORB, ID_RAZORLEAF, ID_SLEEPPOWDER, 
+	ID_BITE, ID_BUBBLE, ID_WATERPUMP, ID_WITHDRAW, 
+	ID_SCRATCH, ID_EMBER, ID_FIRESPIN, ID_GROWL
+};
 
 typedef struct _Move {
     char* name;
@@ -36,13 +40,30 @@ typedef struct _Buff {
 	uint8_t durationMax;	// Amount of rounds this Buff start with when first applied
 } Buff;
 
-Move Move_Tackle();
-Move Move_VineWhip();
-Move Move_Bubble();
-Move Move_Ember();
-Move Move_Bite();
-Move Move_Growl();
+// Bulbasaur
+Move Move_Tackle();			// NORMAL damage
+Move Move_Absorb();			// Low GRASS damage. Heal self
+Move Move_RazorLeaf();		// High GRASS damage
+Move Move_SleepPowder();	// Target SLEEPS (1 turn)
 
+// Squirtle
+Move Move_Bite();			// DARK damage
+Move Move_Bubble();			// Low WATER damage. SLOW target (4 turns)
+Move Move_WaterPump();		// High WATER damage
+Move Move_Withdraw();		// Increase self's DEFENSE (4 turns)
+
+// Charmander
+Move Move_Scratch();		// NORMAL damage
+Move Move_Ember();			// Low FIRE damage. BURN target (4 turns, deal low FIRE damage at start of turn)
+Move Move_FireSpin();		// High FIRE damage
+Move Move_Growl();			// Reduce target's ATTACK (4 turns)
+
+// Pikachu
+/*Move Move_IronTail();		// STEEL damage
+Move Move_Spark();			// Low ELECTRIC damage. PARALYZE target (4 turns, chance to skip turn)
+Move Move_Thunder();		// High ELECTRIC damage
+Move Move_Charge();			// Increase self ATTACK (1 turn). Remove negative effects
+*/
 Buff Buff_AttackLow();
 Buff Buff_AgilityHigh();
 Buff Buff_Burn();

@@ -61,7 +61,7 @@ long textDisplayTimer = 0;
 
 Pokemon playerMainPokemon;
 Pokemon enemyMainPokemon;
-Move moveList[5];
+Move moveList[12];
 
 uint8_t test_health = 50;
 int8_t gameDifficulty = 1;
@@ -300,10 +300,19 @@ void drawPokemonBattleUI(Trainer* trainer, uint8_t isPlayer) {
 
 void initializeMoves() {
 	moveList[ID_TACKLE] = Move_Tackle();
-	moveList[ID_VINEWHIP] = Move_VineWhip();
-	moveList[ID_BUBBLE] = Move_Bubble();
-	moveList[ID_EMBER] = Move_Ember();
+	moveList[ID_ABSORB] = Move_Absorb();
+	moveList[ID_RAZORLEAF] = Move_RazorLeaf();
+	moveList[ID_SLEEPPOWDER] = Move_SleepPowder();
+	
 	moveList[ID_BITE] = Move_Bite();
+	moveList[ID_BUBBLE] = Move_Bubble();
+	moveList[ID_WATERPUMP] = Move_WaterPump();
+	moveList[ID_WITHDRAW] = Move_Withdraw();
+	
+	moveList[ID_SCRATCH] = Move_Scratch();
+	moveList[ID_EMBER] = Move_Ember();
+	moveList[ID_FIRESPIN] = Move_FireSpin();
+	moveList[ID_GROWL] = Move_Growl();
 }
 
 void initializePlayerTrainer() {

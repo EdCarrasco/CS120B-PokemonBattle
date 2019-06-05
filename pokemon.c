@@ -42,9 +42,9 @@ Pokemon Pokemon_Bulbasaur() {
 	pokemon.defense = DEFENSE_NORMAL;
 	pokemon.agility = SPEED_NORMAL;	
 	pokemon.moveIds[0] = ID_TACKLE;
-	pokemon.moveIds[1] = ID_VINEWHIP;
-	pokemon.moveIds[2] = ID_BUBBLE;
-	pokemon.moveIds[3] = ID_EMBER;
+	pokemon.moveIds[1] = ID_ABSORB;
+	pokemon.moveIds[2] = ID_RAZORLEAF;
+	pokemon.moveIds[3] = ID_SLEEPPOWDER;
 	pokemon.isKnockedOut = 0;
 	
 	return pokemon;
@@ -68,9 +68,9 @@ Pokemon Pokemon_Squirtle() {
 	pokemon.defense = DEFENSE_NORMAL;
 	pokemon.agility = SPEED_NORMAL;
 	pokemon.moveIds[0] = ID_BITE;
-	pokemon.moveIds[1] = ID_VINEWHIP;
-	pokemon.moveIds[2] = ID_BUBBLE;
-	pokemon.moveIds[3] = ID_EMBER;
+	pokemon.moveIds[1] = ID_BUBBLE;
+	pokemon.moveIds[2] = ID_WATERPUMP;
+	pokemon.moveIds[3] = ID_WITHDRAW;
 	pokemon.isKnockedOut = 0;
 	
 	return pokemon;
@@ -93,10 +93,10 @@ Pokemon Pokemon_Charmander() {
 	pokemon.attack = ATTACK_NORMAL;
 	pokemon.defense = DEFENSE_NORMAL;
 	pokemon.agility = SPEED_NORMAL;	
-	pokemon.moveIds[0] = ID_TACKLE;
-	pokemon.moveIds[1] = ID_VINEWHIP;
-	pokemon.moveIds[2] = ID_BUBBLE;
-	pokemon.moveIds[3] = ID_EMBER;
+	pokemon.moveIds[0] = ID_SCRATCH;
+	pokemon.moveIds[1] = ID_EMBER;
+	pokemon.moveIds[2] = ID_FIRESPIN;
+	pokemon.moveIds[3] = ID_GROWL;
 	pokemon.isKnockedOut = 0;
 	
 	return pokemon;
